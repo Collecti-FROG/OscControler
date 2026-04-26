@@ -140,65 +140,133 @@
         {
           "id": "1776284613995",
           "type": "slider",
-          "x": 160,
-          "y": 425,
-          "w": 893,
-          "h": 230,
+          "x": 3,
+          "y": 407.0057144165039,
+          "w": 375,
+          "h": 120,
           "address": "/composition/layers/1/video/effects/colorize/effect/color/hue",
-          "value": 0.34597230617736524,
-          "dir": "h"
+          "value": 0.37212553491389483,
+          "dir": "h",
+          "name": "HUE color"
         },
         {
           "id": "1776285464464",
           "type": "pad",
-          "x": 183.79998779296875,
-          "y": 243.79998779296875,
+          "x": 0,
+          "y": 0,
           "w": 120,
           "h": 120,
-          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
-          "value": 0
+          "address": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors/",
+          "value": 0,
+          "color": "#ff4d4d",
+          "isToggle": true,
+          "name": ""
         },
         {
           "id": "1776285467084",
           "type": "pad",
-          "x": 308.81256103515625,
-          "y": 243.81248474121094,
+          "x": 130.00006103515625,
+          "y": 0,
           "w": 120,
           "h": 120,
-          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
+          "address": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors",
           "value": 0,
-          "isToggle": true
-        },
-        {
-          "id": "1776285477573",
-          "type": "pad",
-          "x": 685.2066040039062,
-          "y": 243.81558227539062,
-          "w": 120,
-          "h": 120,
-          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
-          "value": 0,
-          "isToggle": true
+          "isToggle": false,
+          "color": "#00ff88"
         },
         {
           "id": "1776285478073",
           "type": "pad",
-          "x": 560,
-          "y": 245,
+          "x": 0,
+          "y": 133.00994873046875,
           "w": 120,
           "h": 120,
           "address": "/composition/video/effects/colorize/effect/color/palette/colors",
-          "value": 0
+          "value": 0,
+          "color": "#ffcc00"
         },
         {
           "id": "1776285478442",
           "type": "pad",
-          "x": 433.79998779296875,
-          "y": 243.79998779296875,
+          "x": 260.00311279296875,
+          "y": 0,
           "w": 120,
           "h": 120,
           "address": "/composition/video/effects/colorize/effect/color/palette/colors",
+          "value": 0,
+          "color": "#00d2ff"
+        },
+        {
+          "id": "1777229763429",
+          "type": "pad",
+          "x": 129.00858306884766,
+          "y": 132.73868560791016,
+          "w": 120,
+          "h": 120,
+          "address": "/pad-3429",
+          "value": 0,
+          "color": "#cc00ff"
+        },
+        {
+          "id": "1777229764974",
+          "type": "pad",
+          "x": 0,
+          "y": 267.00003814697266,
+          "w": 120,
+          "h": 120,
+          "address": "/pad-4974",
           "value": 0
+        },
+        {
+          "id": "1777229765796",
+          "type": "pad",
+          "x": 259.1012954711914,
+          "y": 134.72733306884766,
+          "w": 120,
+          "h": 120,
+          "address": "/pad-5796",
+          "value": 0
+        },
+        {
+          "id": "1777229896153",
+          "type": "pad",
+          "x": 259.2000198364258,
+          "y": 270.7454833984375,
+          "w": 120,
+          "h": 120,
+          "address": "/pad-6153",
+          "value": 0
+        },
+        {
+          "id": "1777229897213",
+          "type": "pad",
+          "x": 128.00684356689453,
+          "y": 269.0074005126953,
+          "w": 120,
+          "h": 120,
+          "address": "/pad-7213",
+          "value": 0
+        },
+        {
+          "id": "1777232834568",
+          "type": "grid",
+          "x": 410.5906677246094,
+          "y": 0,
+          "w": 400,
+          "h": 400,
+          "address": "/grid-4568",
+          "value": 0,
+          "rows": 3,
+          "cols": 3,
+          "gridStates": {
+            "0": 0,
+            "1": 0
+          },
+          "gridMapping": {
+            "0": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors",
+            "1": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors"
+          },
+          "color": "#ff4d4d"
         }
       ]
     }
