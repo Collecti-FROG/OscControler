@@ -1,0 +1,207 @@
+{
+  "tabs": [
+    {
+      "id": "tab-1776281009748",
+      "name": "Live Show",
+      "widgets": [
+        {
+          "id": "1776281013643",
+          "type": "pad",
+          "x": 714.4683837890625,
+          "y": 94.00576782226562,
+          "w": 371.83837890625,
+          "h": 95.05845642089844,
+          "address": "/composition/disconnectall",
+          "value": 0,
+          "color": "#ff4d4d",
+          "name": "RESET ALL"
+        },
+        {
+          "id": "1776281732834",
+          "type": "pad",
+          "x": 440,
+          "y": 70,
+          "w": 120,
+          "h": 120,
+          "address": "/composition/video/effects/shiftrgb2/bypassed",
+          "value": 1,
+          "name": "RGB Display",
+          "isToggle": true
+        },
+        {
+          "id": "1776282974102",
+          "type": "grid",
+          "x": 701,
+          "y": 209,
+          "w": 400,
+          "h": 300,
+          "address": "/grid-4102",
+          "value": 0,
+          "rows": 2,
+          "cols": 4,
+          "gridStates": {
+            "0": 0,
+            "1": 0,
+            "2": 0,
+            "3": 0,
+            "4": 0,
+            "5": 0,
+            "6": 0,
+            "7": 0
+          },
+          "gridMapping": {
+            "0": "/composition/layers/2/clips/1/connect",
+            "1": "/composition/layers/2/clips/2/connect",
+            "2": "/composition/layers/2/clips/3/connect",
+            "4": "/composition/layers/1/clips/1/connect",
+            "5": "/composition/layers/1/clips/2/connect",
+            "6": "/composition/layers/1/clips/3/connect",
+            "7": "/composition/layers/1/clips/4/connect"
+          },
+          "color": "#00ff88",
+          "gridLabels": {
+            "0": "L2/1",
+            "1": "L2/2",
+            "2": "L2/3",
+            "3": "L2/4",
+            "4": "L1/1",
+            "5": "L1/2",
+            "6": "L1/3",
+            "7": "L1/4"
+          }
+        },
+        {
+          "id": "1776283141495",
+          "type": "slider",
+          "x": 1115.98388671875,
+          "y": 112.99874877929688,
+          "w": 98.0118408203125,
+          "h": 399.8778076171875,
+          "address": "/composition/layers/2/transition/duration",
+          "value": 0.4360784453207726,
+          "dir": "v",
+          "name": "transition l2"
+        },
+        {
+          "id": "1776283200496",
+          "type": "slider",
+          "x": 1235,
+          "y": 113,
+          "w": 87.0999755859375,
+          "h": 398.3000183105469,
+          "address": "/composition/layers/1/transition/duration",
+          "value": 0.028886079788208008,
+          "dir": "v",
+          "name": "transition l1"
+        },
+        {
+          "id": "1776283363823",
+          "type": "grid",
+          "x": 618.90625,
+          "y": 214.92190551757812,
+          "w": 70.4000244140625,
+          "h": 292.199951171875,
+          "address": "/grid-3823",
+          "value": 0,
+          "rows": 2,
+          "cols": 1,
+          "gridStates": {
+            "0": 0,
+            "1": 0
+          },
+          "gridMapping": {
+            "0": "/composition/layers/2/clear",
+            "1": "/composition/layers/1/clear"
+          },
+          "color": "#ff4d4d",
+          "gridLabels": {
+            "0": "RESET",
+            "1": "RESET"
+          }
+        },
+        {
+          "id": "1776283713428",
+          "type": "pad",
+          "x": 570,
+          "y": 70.00933837890625,
+          "w": 120,
+          "h": 120,
+          "address": "/composition/video/effects/invertrgb/bypassed",
+          "value": 1,
+          "isToggle": true,
+          "color": "#00ff88"
+        }
+      ]
+    },
+    {
+      "id": "tab-1776284558994",
+      "name": "Tritri",
+      "widgets": [
+        {
+          "id": "1776284613995",
+          "type": "slider",
+          "x": 160,
+          "y": 425,
+          "w": 893,
+          "h": 230,
+          "address": "/composition/layers/1/video/effects/colorize/effect/color/hue",
+          "value": 0.34597230617736524,
+          "dir": "h"
+        },
+        {
+          "id": "1776285464464",
+          "type": "pad",
+          "x": 183.79998779296875,
+          "y": 243.79998779296875,
+          "w": 120,
+          "h": 120,
+          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
+          "value": 0
+        },
+        {
+          "id": "1776285467084",
+          "type": "pad",
+          "x": 308.81256103515625,
+          "y": 243.81248474121094,
+          "w": 120,
+          "h": 120,
+          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
+          "value": 0,
+          "isToggle": true
+        },
+        {
+          "id": "1776285477573",
+          "type": "pad",
+          "x": 685.2066040039062,
+          "y": 243.81558227539062,
+          "w": 120,
+          "h": 120,
+          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
+          "value": 0,
+          "isToggle": true
+        },
+        {
+          "id": "1776285478073",
+          "type": "pad",
+          "x": 560,
+          "y": 245,
+          "w": 120,
+          "h": 120,
+          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
+          "value": 0
+        },
+        {
+          "id": "1776285478442",
+          "type": "pad",
+          "x": 433.79998779296875,
+          "y": 243.79998779296875,
+          "w": 120,
+          "h": 120,
+          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
+          "value": 0
+        }
+      ]
+    }
+  ],
+  "activeTab": "tab-1776284558994"
+}

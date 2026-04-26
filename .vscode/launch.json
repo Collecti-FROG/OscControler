@@ -1,0 +1,14 @@
+{
+    "version": "0.2.0",
+    "configurations": [
+        {
+            "name": "Run Bridge OSC",
+            "type": "debugpy",
+            "request": "launch",
+            "program": "${workspaceFolder}/bridge.py",
+            "console": "integratedTerminal",
+            "python": "python3",
+            "justMyCode": true
+        }
+    ]
+}

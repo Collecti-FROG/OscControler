@@ -1,0 +1,18 @@
+{
+  "resolume": {
+    "composition": [
+      {"name": "Master Opacity", "address": "/composition/video/opacity", "type": "fader-v"},
+      {"name": "Master Speed", "address": "/composition/speed", "type": "fader-v"}
+    ],
+    "grids": [
+      {"name": "Clip Grid 4x4", "address": "/composition/layers/{r}/clips/{c}/trigger", "type": "grid", "rows": 4, "cols": 4, "behavior": "push"},
+      {"name": "Layer Opacity 8x1", "address": "/composition/layers/{i}/video/opacity", "type": "grid", "rows": 1, "cols": 8, "behavior": "push"}
+    ]
+  },
+  "ableton": {
+    "transport": [
+      {"name": "Play", "address": "/live/song/start", "type": "push"},
+      {"name": "Stop", "address": "/live/song/stop", "type": "push"}
+    ]
+  }
+}

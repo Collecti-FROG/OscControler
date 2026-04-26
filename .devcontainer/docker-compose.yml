@@ -1,0 +1,12 @@
+services:
+  app:
+    image: mcr.microsoft.com/devcontainers/python:3-3.14-trixie
+    volumes:
+      - ..:/workspaces/OSC-Controler:cached
+    ports:
+      - "8000:8000"
+      - "8080:8080"
+      - "8765:8765"
+      - "7000:7000/udp"
+      - "7001:7001/udp"
+    command: sleep infinity

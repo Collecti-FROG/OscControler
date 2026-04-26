@@ -1,0 +1,1153 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0, maximum-scale=1.0, user-scalable=no">
+    <title>PROXIMA OSC v4.3 - Iron Shell Edition</title>
+    <script src="https://cdn.jsdelivr.net/npm/interactjs/dist/interact.min.js"></script>
+    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;600;800&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #000;
+            --panel: rgba(10, 10, 10, 0.85);
+            --accent: #00d2ff;
+            --accent-rgb: 0, 210, 255;
+            --border: rgba(255, 255, 255, 0.08);
+            --text: #e0e0e0;
+            --dim: #777;
+            --danger: #ff4d4d;
+            --glass: rgba(255, 255, 255, 0.03);
+            --glass-active: rgba(255, 255, 255, 0.07);
+        }
+
+        * { box-sizing: border-box; -webkit-tap-highlight-color: transparent; }
+        body, html { margin: 0; padding: 0; width: 100vw; height: 100vh; overflow: hidden; background: var(--bg); color: var(--text); font-family: 'Inter', sans-serif; user-select: none; -webkit-user-select: none; }
+        input, textarea, [contenteditable] { user-select: text !important; -webkit-user-select: text !important; touch-action: auto !important; pointer-events: all !important; }
+
+        /* Structure GRID (Iron Shell) */
+        .app-root {
+            display: grid;
+            grid-template-areas: "top top top" "side-l workspace side-r";
+            grid-template-rows: 60px 1fr;
+            grid-template-columns: auto 1fr auto;
+            width: 100vw; height: 100vh;
+        }
+
+        .top-bar { grid-area: top; background: #080808; border-bottom: 1px solid var(--border); display: flex; align-items: center; justify-content: space-between; padding: 0 20px; z-index: 1000; }
+        .logo { font-weight: 800; font-size: 0.8rem; letter-spacing: 4px; color: var(--accent); text-transform: uppercase; }
+
+        .sidebar { background: var(--panel); backdrop-filter: blur(30px); border-right: 1px solid var(--border); transition: all 0.4s cubic-bezier(0.16, 1, 0.3, 1); overflow-y: auto; overflow-x: hidden; display: flex; flex-direction: column; z-index: 2000; touch-action: auto; -webkit-overflow-scrolling: touch; }
+        .sidebar-l { grid-area: side-l; width: 320px; }
+        .sidebar-r { grid-area: side-r; width: 340px; border-right: none; border-left: 1px solid var(--border); z-index: 2001; }
+        .sidebar.collapsed { width: 0 !important; border: none; opacity: 0; pointer-events: none; transform: translateX(-40px); }
+        .sidebar-r.collapsed { transform: translateX(40px); }
+
+        @media (max-width: 1024px) {
+            .app-root { grid-template-areas: "top" "workspace"; grid-template-columns: 100vw; grid-template-rows: 60px 1fr; }
+            .sidebar { position: fixed; top: 60px; bottom: 0; width: 320px !important; z-index: 3000; box-shadow: 0 0 100px rgba(0,0,0,0.9); touch-action: auto; }
+            .sidebar-l { left: 0; border-right: 1px solid var(--border); }
+            .sidebar-r { right: 0; border-left: 1px solid var(--border); z-index: 3001; }
+            .sidebar-l.collapsed { transform: translateX(-100%); width: 320px !important; opacity: 1; visibility: visible; pointer-events: auto; }
+            .sidebar-r.collapsed { transform: translateX(100%); width: 340px !important; opacity: 1; visibility: visible; pointer-events: auto; }
+            .logo span { display: none; }
+        }
+
+        .workspace { grid-area: workspace; position: relative; overflow: auto; background: #050505; }
+        .canvas { 
+            position: relative; width: 3000px; height: 3000px; 
+            background-image: radial-gradient(rgba(255,255,255,0.05) 1px, transparent 1px);
+            background-size: 50px 50px;
+        }
+
+        /* UI Elements */
+        .mode-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: #fff; padding: 8px 15px; border-radius: 20px; font-size: 0.6rem; cursor: pointer; text-transform: uppercase; font-weight: 800; letter-spacing: 1px; }
+        .mode-btn.active { background: var(--accent); color: #000; box-shadow: 0 0 15px var(--accent); }
+
+        .sidebar-section { padding: 20px; border-bottom: 1px solid var(--border); }
+        .sidebar-title { font-size: 0.6rem; text-transform: uppercase; color: var(--dim); letter-spacing: 2px; font-weight: 800; margin-bottom: 15px; }
+
+        .tab-item { padding: 10px; border-radius: 10px; margin-bottom: 5px; cursor: pointer; display: flex; justify-content: space-between; align-items: center; font-size: 0.8rem; border: 1px solid transparent; }
+        .tab-item:hover { background: rgba(255,255,255,0.05); }
+        .tab-item.active { background: rgba(255,255,255,0.1); border-color: var(--border); color: var(--accent); }
+
+        /* Widgets */
+        .widget {
+            position: absolute; background: var(--glass); border: 1px solid var(--border);
+            border-radius: 18px; display: flex; flex-direction: column; touch-action: none;
+            backdrop-filter: blur(12px); -webkit-backdrop-filter: blur(12px);
+            z-index: 10; transition: box-shadow 0.3s, border-color 0.3s, transform 0.2s;
+        }
+        .widget.active { border-color: var(--accent); box-shadow: 0 0 35px rgba(var(--accent-rgb), 0.35); z-index: 100; background: var(--glass-active); transform: scale(1.02); }
+        .widget:not(.active) { cursor: default; }
+        .widget:hover:not(.active) { border-color: rgba(var(--accent-rgb), 0.3); }
+        .widget-body { flex: 1; display: flex; align-items: center; justify-content: center; position: relative; padding: 10px; pointer-events: auto; }
+        
+        .w-label { 
+            position: absolute; inset: 0; display: flex; align-items: center; justify-content: center; 
+            text-align: center; pointer-events: none; font-size: 0.75rem; font-weight: 600; 
+            text-transform: uppercase; letter-spacing: 1px; color: rgba(255,255,255,0.7);
+            z-index: 5; text-shadow: 0 2px 10px #000; padding: 10px;
+        }
+
+        .resizer { position: absolute; bottom: 8px; right: 8px; width: 15px; height: 15px; cursor: nwse-resize; display: none; pointer-events: none; }
+        .widget.active .resizer { display: block; border-right: 3px solid var(--accent); border-bottom: 3px solid var(--accent); opacity: 0.6; pointer-events: auto; }
+
+        /* Controls */
+        .btn { background: var(--glass); border: 1px solid var(--border); color: #fff; padding: 12px; border-radius: 12px; cursor: pointer; font-size: 0.65rem; font-weight: 800; text-transform: uppercase; width: 100%; transition: 0.2s; margin-bottom: 8px; backdrop-filter: blur(5px); }
+        .btn:hover { background: var(--glass-active); border-color: var(--accent); transform: translateY(-1px); }
+        .btn.active { background: var(--accent) !important; color: #000 !important; box-shadow: 0 0 20px var(--accent) !important; }
+        .btn.accent { background: var(--accent); color: #000; border: none; box-shadow: 0 4px 15px rgba(var(--accent-rgb), 0.3); }
+        .btn.accent:hover { box-shadow: 0 6px 20px rgba(var(--accent-rgb), 0.5); }
+        .btn.danger { color: var(--danger); border-color: rgba(255,77,77,0.2); }
+
+        .input { 
+            width: 100%; background: rgba(0,0,0,0.5); border: 1px solid var(--border); 
+            color: #fff; padding: 12px; border-radius: 10px; font-family: inherit; 
+            font-size: 0.8rem; margin-bottom: 10px; transition: 0.2s;
+            pointer-events: all !important;
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            touch-action: auto !important;
+            -webkit-tap-highlight-color: rgba(0,210,255,0.2);
+            position: relative; z-index: 10;
+        }
+        .input:focus { border-color: var(--accent); outline: none; background: rgba(0,0,0,0.7); box-shadow: 0 0 0 2px rgba(var(--accent-rgb),0.2); }
+        input[type="text"], input[type="number"] {
+            -webkit-user-select: text !important;
+            user-select: text !important;
+            touch-action: auto !important;
+        }
+        
+        /* Modals */
+        .modal { position: fixed; inset:0; background: rgba(0,0,0,0.85); backdrop-filter: blur(15px); display: none; align-items: center; justify-content: center; z-index: 9999; }
+        .modal.active { display: flex; }
+        .modal-card { background: #111; border: 1px solid var(--border); border-radius: 24px; padding: 30px; width: 90%; max-width: 400px; text-align: center; box-shadow: 0 20px 50px rgba(0,0,0,0.5); }
+        .modal-card input { touch-action: auto !important; user-select: text !important; }
+
+        .osc-led { width: 10px; height: 10px; background: #222; border-radius: 50%; display: inline-block; margin-right: 12px; transition: 0.1s; border: 1px solid rgba(255,255,255,0.1); }
+        .osc-led.active { background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+
+        /* Widget Contents */
+        .pad-el { width: 100%; height: 100%; border-radius: 15px; border: 1px solid rgba(255,255,255,0.05); transition: 0.2s; background: rgba(255,255,255,0.02); position: relative; }
+        .pad-el.active { background: var(--accent); box-shadow: 0 0 40px rgba(var(--accent-rgb), 0.6); border-color: transparent; }
+        
+        .fader-v { width: 50px; height: 92%; background: rgba(255,255,255,0.03); border-radius: 12px; position: relative; border: 1px solid var(--border); touch-action: none; display: flex; align-items: flex-end; justify-content: center; overflow: hidden; }
+        .fader-fill { 
+            position: absolute; bottom: 0; width: 100%; 
+            background: linear-gradient(to top, rgba(var(--accent-rgb), 0.8), rgba(var(--accent-rgb), 0.3));
+            box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.2); 
+            pointer-events: none;
+            border-top: 3px solid #fff;
+        }
+        .fader-fill::after {
+            content: ""; position: absolute; top: -10px; left: 0; right: 0; height: 10px;
+            background: linear-gradient(to top, rgba(255,255,255,0.4), transparent);
+            filter: blur(4px);
+        }
+
+        .grid-ctn { display: grid; gap: 6px; width: 100%; height: 100%; }
+        .grid-cell { background: rgba(255,255,255,0.04); border-radius: 10px; border:1px solid rgba(255,255,255,0.06); transition: 0.2s; position: relative; display: flex; align-items: center; justify-content: center; font-size: 0.65rem; color: rgba(255,255,255,0.5); overflow: hidden; text-transform: uppercase; font-weight: 700; text-align: center; padding: 4px; }
+        .grid-cell.active { background: var(--accent); color: #000; font-weight: 800; box-shadow: 0 0 15px rgba(var(--accent-rgb), 0.5); border-color: transparent; }
+        .grid-cell.selected { border: 2px solid var(--accent); box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.3); color: var(--accent); background: rgba(var(--accent-rgb), 0.1); }
+
+        /* QR Sidebar Section */
+        .sidebar-footer { margin-top: auto; padding: 20px; border-top: 1px solid var(--border); text-align: center; }
+        .qr-ctn { background: #fff; padding: 10px; border-radius: 12px; margin-bottom: 12px; display: inline-block; }
+        .qr-ctn img { width: 140px; height: 140px; display: block; }
+        .ip-badge { background: rgba(var(--accent-rgb), 0.1); border: 1px solid rgba(var(--accent-rgb), 0.3); color: var(--accent); padding: 8px 12px; border-radius: 8px; font-size: 0.7rem; font-weight: 800; cursor: pointer; display: block; overflow: hidden; text-overflow: ellipsis; white-space: nowrap; }
+        .ip-badge:hover { background: rgba(var(--accent-rgb), 0.2); transform: scale(1.02); }
+
+        /* Toggle Mode (Visual feedback) */
+        .widget.active-toggle { border-color: #fff; box-shadow: 0 0 25px #fff; }
+
+        /* Horizontal Fader Styles */
+        .fader-h { width: 92%; height: 50px; background: rgba(255,255,255,0.03); border-radius: 12px; position: relative; border: 1px solid var(--border); touch-action: none; display: flex; align-items: center; justify-content: flex-start; overflow: hidden; }
+        .fader-fill-h { 
+            position: absolute; left: 0; height: 100%; 
+            background: linear-gradient(to right, rgba(var(--accent-rgb), 0.2), rgba(var(--accent-rgb), 0.8));
+            box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.2); 
+            pointer-events: none;
+            border-right: 3px solid #fff;
+        }
+        .fader-fill-h::after {
+            content: ""; position: absolute; right: -10px; top: 0; bottom: 0; width: 10px;
+            background: linear-gradient(to right, rgba(255,255,255,0.4), transparent);
+            filter: blur(4px);
+        }
+
+        /* Switch Toggle Styles */
+        .switch-ctn { width: 100%; height: 50px; background: rgba(255,255,255,0.03); border: 1px solid var(--border); border-radius: 25px; position: relative; cursor: pointer; transition: 0.3s; overflow: hidden; }
+        .switch-handle { position: absolute; top: 4px; left: 4px; bottom: 4px; width: 42px; background: #fff; border-radius: 21px; transition: 0.3s cubic-bezier(0.18, 0.89, 0.32, 1.28); box-shadow: 0 2px 8px rgba(0,0,0,0.4); }
+        .switch-label { position: absolute; inset: 0; display: flex; justify-content: space-between; align-items: center; padding: 0 15px; font-size: 0.6rem; font-weight: 800; color: var(--dim); pointer-events: none; }
+        .switch-ctn.active { background: rgba(var(--accent-rgb), 0.2); border-color: var(--accent); }
+        .switch-ctn.active .switch-handle { transform: translateX(calc(100% + 4px)); background: var(--accent); box-shadow: 0 0 15px var(--accent); }
+        .switch-ctn.active .switch-label .l-on { color: var(--accent); }
+        .switch-ctn.active .switch-label .l-off { opacity: 0.2; }
+        /* Position XY Pad Styles */
+        .pos-ctn { width: 100%; height: 100%; position: relative; border-radius: 12px; background: rgba(0,0,0,0.2); border: 1px solid var(--border); overflow: hidden; cursor: crosshair; touch-action: none; }
+        .pos-grid { position: absolute; inset:0; background: radial-gradient(var(--border) 1px, transparent 1px); background-size: 20px 20px; opacity: 0.5; }
+        .pos-crosshair { position: absolute; width: 20px; height: 20px; border: 2px solid #fff; border-radius: 50%; transform: translate(-50%, -50%); pointer-events: none; box-shadow: 0 0 15px var(--accent); }
+        .pos-crosshair::before, .pos-crosshair::after { content: ""; position: absolute; background: var(--accent); opacity: 0.5; }
+        .pos-crosshair::before { width: 100vw; height: 1px; left: -50vw; top: 50%; }
+        .pos-crosshair::after { height: 100vh; width: 1px; top: -50vh; left: 50%; }
+
+        @media (max-width: 1024px) { .menu-toggle { display: block; } }
+
+        /* Mode Live CSS */
+        body.live-active .sidebar, 
+        body.live-active #mapping-status,
+        body.live-active .top-bar #edit-tools { display: none !important; }
+        body.live-active .app-main { left: 0 !important; right: 0 !important; }
+        
+        /* Snap indicator */
+        .widget.snapping { outline: 2px solid var(--accent) !important; box-shadow: 0 0 20px rgba(var(--accent-rgb), 0.6) !important; }
+        .snap-btn { background: rgba(255,255,255,0.05); border: 1px solid var(--border); color: var(--dim); font-size: 0.65rem; font-weight: 800; letter-spacing: 2px; padding: 6px 12px; border-radius: 8px; cursor: pointer; transition: 0.2s; white-space: nowrap; }
+        .snap-btn.active { background: rgba(var(--accent-rgb),0.15); border-color: var(--accent); color: var(--accent); }
+
+        /* Learn mode styles */
+        #learn-btn.active { background: rgba(0,255,136,0.15) !important; border-color: #00ff88 !important; color: #00ff88 !important; animation: learn-pulse-btn 1.5s ease-in-out infinite; }
+        @keyframes learn-pulse-btn {
+            0%, 100% { box-shadow: 0 0 6px rgba(0,255,136,0.4); }
+            50% { box-shadow: 0 0 18px rgba(0,255,136,0.9); }
+        }
+        .grid-cell.selected { border-color: #fff; box-shadow: 0 0 10px #fff; z-index: 5; }
+        
+        /* Mapping Overlay */
+        .mapping-bar {
+            position: fixed; top: 75px; left: 50%; transform: translateX(-50%);
+            background: #00ff88; color: #000; padding: 12px 25px; border-radius: 40px;
+            font-size: 0.7rem; font-weight: 800; text-transform: uppercase;
+            box-shadow: 0 10px 40px rgba(0, 255, 136, 0.4);
+            display: none; align-items: center; gap: 15px; z-index: 5000;
+            animation: slideDown 0.4s cubic-bezier(0.16, 1, 0.3, 1);
+        }
+        .mapping-bar.active { display: flex; }
+        .mapping-bar b { background: rgba(0,0,0,0.1); padding: 4px 10px; border-radius: 6px; font-family: monospace; }
+        
+        @keyframes slideDown { 
+            from { transform: translate(-50%, -20px); opacity: 0; }
+            to { transform: translate(-50%, 0); opacity: 1; }
+        }
+
+        .nav-btn { background: rgba(255,255,255,0.08); border: 1px solid var(--border); color: #fff; padding: 10px; border-radius: 10px; cursor: pointer; display: flex; align-items: center; justify-content: center; transition: 0.2s; }
+        .nav-btn:hover { background: rgba(255,255,255,0.15); border-color: #fff; }
+
+        @keyframes pulse { 0% { opacity: 0.5; transform: scale(0.95); } 50% { opacity: 1; transform: scale(1.05); } 100% { opacity: 0.5; transform: scale(0.95); } }
+    </style>
+</head>
+<body>
+    <div id="mapping-status" class="mapping-bar">
+        <span>🎯 PRÊT POUR MAPPING</span>
+        <b id="captured-addr">...</b>
+    </div>
+    <div class="app-root">
+        <div class="top-bar">
+            <div style="display:flex; align-items:center; gap:4px;">
+                <div class="menu-toggle" onclick="toggleSidebarL()">☰</div>
+                <div class="logo"><div class="osc-led" id="osc-led"></div><span>PROXIMA v4.3</span></div>
+            </div>
+            <div style="display:flex; align-items:center; gap:8px;">
+                <button class="snap-btn active" id="live-btn" onclick="toggleLiveMode()" title="Mode Sécurité Show">🛡️ LIVE ON</button>
+                <div id="edit-tools" style="display:flex; align-items:center; gap:8px;">
+                    <button class="snap-btn" id="learn-btn" onclick="toggleLearnMode()" title="Workflow: 1) Active LEARN ici  2) Dans Resolume: clic droit sur un parametre > Shortcut > Edit OSC  3) L'adresse est capturee automatiquement">🎯 LEARN</button>
+                    <button class="snap-btn" id="snap-btn" onclick="toggleSnap()" title="Aimanter les blocs">🧲 SNAP</button>
+                    <button class="mode-btn" id="edit-btn" onclick="toggleEdit()">Mode Édition</button>
+                </div>
+            </div>
+        </div>
+
+        <div class="sidebar sidebar-l collapsed" id="side-l">
+            <div class="sidebar-section">
+                <div class="sidebar-title">Nouveau Bloc</div>
+                <button class="btn accent" onclick="createWidget('pad')">Ajouter PAD</button>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <button class="btn accent" onclick="createWidget('slider', 'v')">FADER V</button>
+                    <button class="btn accent" onclick="createWidget('slider', 'h')">FADER H</button>
+                </div>
+                <button class="btn accent" onclick="createWidget('switch')">🔘 SWITCH ON/OFF</button>
+                <button class="btn accent" onclick="createWidget('position')">📍 POSITION (XY)</button>
+                <button class="btn accent" onclick="createWidget('grid')">Ajouter GRILLE</button>
+            </div>
+            <div class="sidebar-section">
+                <div class="sidebar-title">Onglets</div>
+                <div id="tab-list"></div>
+                <button class="btn" style="border-style:dashed; margin-top:10px;" onclick="promptCreateTab()">+ Ajouter Onglet</button>
+            </div>
+            <div class="sidebar-footer">
+                <div class="sidebar-title" style="margin-bottom:10px">Connexion Mobile</div>
+                <div class="qr-ctn"><img id="qr-img" src="qrcode.svg" onerror="this.parentElement.style.display='none'"></div>
+                <div class="ip-badge" id="ip-badge" onclick="copyIP()">---.---.---.---</div>
+            </div>
+        </div>
+
+        <div class="workspace">
+            <div class="canvas" id="canvas"></div>
+        </div>
+
+        <div class="sidebar sidebar-r collapsed" id="side-r">
+            <div class="sidebar-section">
+                <div class="sidebar-title" id="config-title">Réglages</div>
+                <div id="config-ui"></div>
+                <div style="margin-top:20px;">
+                    <button class="btn accent" onclick="closeConfig()">✓ APPLIQUER</button>
+                    <button class="btn danger" onclick="confirmDeleteWidget()">🗑️ SUPPRIMER</button>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Modal System -->
+    <div class="modal" id="modal">
+        <div class="modal-card">
+            <div class="sidebar-title" id="m-title">CONFIRMATION</div>
+            <div id="m-body" style="margin-bottom:20px; font-size:0.9rem; color:var(--dim);">Message...</div>
+            <input type="text" id="m-input" class="input" style="display:none;">
+            <div style="display:grid; grid-template-columns:1fr 1fr; gap:10px;">
+                <button class="btn" onclick="closeModal()">ANNULER</button>
+                <button class="btn accent" id="m-confirm">OK</button>
+            </div>
+        </div>
+    </div>
+
+    <script>
+        let state = (function() {
+            try {
+                const raw = localStorage.getItem('proxima_layout');
+                if (!raw) throw new Error('empty');
+                const parsed = JSON.parse(raw);
+                // Safety: purge if any tab has >50 widgets (corrupted test state)
+                if (parsed && parsed.tabs) {
+                    parsed.tabs.forEach(t => {
+                        if (t.widgets && t.widgets.length > 50) {
+                            console.warn('[PROXIMA] Auto-purge: onglet', t.name, 'avait', t.widgets.length, 'widgets - remis a zero.');
+                            t.widgets = [];
+                        }
+                    });
+                }
+                return parsed;
+            } catch(e) {
+                return {tabs:[{id:'tab-main',name:'Main',widgets:[]}], activeTab:'tab-main'};
+            }
+        })();
+        let isEdit = false;
+        let isFrozen = false;
+        let isSnap = true;
+        let isLearnMode = false;
+        let isLiveMode = true; // Mode securite active par defaut
+        let pendingAddress = null; 
+        let selId = null, selCell = null, ws = null;
+        let oscHistory = [];
+        let pendingSave = false;         // Guard: ignore incoming layout for 2s after local save
+        let pendingSaveTimer = null;
+
+        function connect() {
+            ws = new WebSocket(`ws://${location.hostname || 'localhost'}:8765`);
+            ws.onmessage = (e) => {
+                const d = JSON.parse(e.data);
+                if (d.address === '/__incoming_signal__') flashLed();
+                if (d.address === '/__server_info__') updateIP(d);
+                // Incoming layout from server — only apply if no pending local save
+                if (d.address === '/__full_layout__') { 
+                    if (!pendingSave) { state = d.layout; render(); }
+                    return;
+                }
+                // Capture LEARN addresses into the global pending buffer
+                if (isLearnMode && d.address === '/__learned_address__') {
+                    pendingAddress = d.learned;
+                    const bar = document.getElementById('mapping-status');
+                    const addrEl = document.getElementById('captured-addr');
+                    if(bar) {
+                        bar.classList.add('active');
+                        bar.style.background = '#00ff88'; // Bright green for capture
+                        bar.style.boxShadow = '0 0 30px rgba(0, 255, 136, 0.6)';
+                    }
+                    
+                    const label = d.source === 'REST' ? '🎯 SÉLECTION ARENA : ' : '🎯 CAPTURE OSC : ';
+                    if(addrEl) addrEl.innerHTML = `<span style="opacity:0.6; font-size:0.8em">${label}</span> <b>${d.learned}</b> <span style="margin-left:10px; font-size:0.6rem; background:rgba(0,0,0,0.2); padding:2px 6px; border-radius:4px;">VERROUILLÉ 3s</span>`;
+                    
+                    // On auto-assign if possible, otherwise let user click
+                    if(selId) onLearned(d.learned);
+
+                    // Visual cool-down feedback
+                    setTimeout(() => {
+                        if(bar && pendingAddress === d.learned) {
+                            bar.style.transition = 'all 1s';
+                            bar.style.background = '#00d2ff'; // Back to blue-ish
+                        }
+                    }, 3000);
+                }
+                
+                if (d.address === '/__address_history__') {
+                    if(!isFrozen) oscHistory = d.history;
+                    if(isEdit && selId) renderConfigUI();
+                }
+                if (!isEdit && !d.address.startsWith('/__')) applyFeedback(d.address, d.value);
+            };
+            ws.onopen = () => ws.send(JSON.stringify({address: "/__request_sync__"}));
+            ws.onclose = () => setTimeout(connect, 2000);
+        }
+
+        function flashLed() { const l = document.getElementById('osc-led'); l.classList.add('active'); setTimeout(() => l.classList.remove('active'), 100); }
+        function send(a, v) { 
+            if(ws && ws.readyState===1 && !isEdit) {
+                const val = parseFloat(v);
+                ws.send(JSON.stringify({address: a, value: val})); 
+            }
+        }
+        
+        // Performance: Throttle for faders
+        function throttle(func, limit) {
+            let inThrottle;
+            return function() {
+                const args = arguments; const context = this;
+                if (!inThrottle) { func.apply(context, args); inThrottle = true; setTimeout(() => inThrottle = false, limit); }
+            }
+        }
+        const throttledSend = throttle(send, 30);
+
+        function getActiveTab() {
+            let t = state.tabs.find(x => x.id === state.activeTab);
+            if (!t && state.tabs.length > 0) { t = state.tabs[0]; state.activeTab = t.id; }
+            return t;
+        }
+
+        // --- Core UI State Management ---
+        function applyLiveMode(active) {
+            isLiveMode = active;
+            document.body.classList.toggle('live-active', isLiveMode);
+            const btn = document.getElementById('live-btn');
+            if (btn) {
+                btn.classList.toggle('active', isLiveMode);
+                btn.innerHTML = isLiveMode ? '🛡️ LIVE ON' : '🔓 EDIT MODE';
+            }
+            const tools = document.getElementById('edit-tools');
+            if (isLiveMode) {
+                if (isEdit) applyEditMode(false);
+                if (isLearnMode) toggleLearnMode();
+                if (tools) tools.style.display = 'none';
+                document.getElementById('side-l').classList.add('collapsed');
+                document.getElementById('side-r').classList.add('collapsed');
+            } else {
+                if (tools) tools.style.display = 'flex';
+            }
+        }
+
+        function toggleLiveMode() { applyLiveMode(!isLiveMode); }
+
+        function applyEditMode(active) {
+            if (isLiveMode && active) return; // Blocked in LIVE
+            isEdit = active;
+            const editBtn = document.getElementById('edit-btn');
+            if (editBtn) editBtn.classList.toggle('active', isEdit);
+            document.getElementById('side-l').classList.toggle('collapsed', !isEdit);
+            if (!isEdit) closeConfig();
+            interact('.widget').draggable({ enabled: isEdit });
+            interact('.widget').resizable({ enabled: isEdit });
+            // NOTE: render() is NOT called here on purpose.
+            // Callers like createWidget() handle their own render() after pushing data.
+        }
+
+        function toggleEdit() { applyEditMode(!isEdit); render(); }
+
+        function toggleSidebarL() { document.getElementById('side-l').classList.toggle('collapsed'); }
+
+        function save() {
+            // Mark a pending save to guard against server overwriting fresh local state
+            pendingSave = true;
+            clearTimeout(pendingSaveTimer);
+            pendingSaveTimer = setTimeout(() => { pendingSave = false; }, 2000);
+            try {
+                localStorage.setItem('proxima_layout', JSON.stringify(state));
+            } catch (e) {
+                console.warn('LocalStorage indisponible, sauvegarde en memoire uniquement.');
+            }
+            if (ws && ws.readyState === 1) {
+                ws.send(JSON.stringify({ address: "/__save_layout__", layout: state }));
+            }
+        }
+
+        function copyIP() {
+            const b = document.getElementById('ip-badge');
+            const url = b.getAttribute('data-url') || b.textContent;
+            navigator.clipboard.writeText(url).then(() => {
+                const old = b.textContent; b.textContent = "COPIÉ ✓";
+                setTimeout(() => b.textContent = old, 1500);
+            });
+        }
+        function updateIP(info) { 
+            const b = document.getElementById('ip-badge');
+            let url;
+            if(info && info.ip) {
+                url = `http://${info.ip}:${info.port || 8000}`;
+                b.textContent = url;
+                b.setAttribute('data-url', url);
+            } else {
+                url = `http://${location.hostname || '127.0.0.1'}:${location.port || 8000}`;
+                b.textContent = url;
+            }
+            // Print access URL in browser console for easy copy-paste
+            console.log(
+                '%c PROXIMA OSC — Acces tablette %c',
+                'background:#00d2ff;color:#000;font-weight:900;padding:4px 10px;border-radius:4px 0 0 4px;font-size:12px;',
+                'background:transparent;'
+            );
+            console.log(`%c  ${url}/controller.html`, 'color:#00d2ff;font-size:13px;font-weight:700;');
+            console.log('%c  Copie ce lien sur ta tablette ou utilise le QR Code.', 'color:#888;font-size:11px;');
+            console.log('%c  LEARN: Clic droit param Resolume > Shortcut > Edit OSC > adresse capturee auto', 'color:#00ff88;font-size:10px;');
+        }
+
+        function render() {
+            const list = document.getElementById('tab-list'); list.innerHTML = '';
+            const active = getActiveTab();
+            if (!active) { console.error('[PROXIMA] render: aucun onglet actif'); return; }
+            state.tabs.forEach(t => {
+                const el = document.createElement('div'); el.className = `tab-item ${t.id === state.activeTab ? 'active' : ''}`;
+                el.innerHTML = `<span>${t.name}</span><span style="display:flex; gap:10px;"><small onclick="promptRenameTab('${t.id}', event)">\u270F\uFE0F</small>${state.tabs.length > 1 ? `<small onclick="confirmDeleteTab('${t.id}', event)">&times;</small>` : ''}</span>`;
+                el.onclick = () => { state.activeTab = t.id; render(); };
+                list.appendChild(el);
+            });
+            const tabNameEl = document.getElementById('active-tab-name');
+            if(tabNameEl) tabNameEl.textContent = active.name.toUpperCase();
+            
+            const canvas = document.getElementById('canvas');
+            if (!canvas) { console.error('[PROXIMA] render: #canvas introuvable'); return; }
+            canvas.innerHTML = '';
+            
+            active.widgets.forEach((w, idx) => {
+                try {
+                    const div = document.createElement('div'); div.className = `widget ${selId === w.id ? 'active' : ''}`;
+                    div.setAttribute('data-id', w.id);
+                    div.style.cssText = `left:${w.x}px; top:${w.y}px; width:${w.w}px; height:${w.h}px;`;
+                    
+                    if(w.color) {
+                        div.style.setProperty('--accent', w.color);
+                        div.style.setProperty('--accent-rgb', hexToRgb(w.color));
+                    }
+                    
+                    div.onclick = (e) => { 
+                        if(isLearnMode && pendingAddress) {
+                            e.stopPropagation();
+                            selCell = null;
+                            onLearned(pendingAddress);
+                        } else if(isEdit) { 
+                            e.stopPropagation(); 
+                            selCell = null; 
+                            openConfig(w.id); 
+                        } 
+                    };
+                    const body = document.createElement('div'); body.className = 'widget-body'; div.appendChild(body);
+                    
+                    if(w.type !== 'grid') {
+                        const label = document.createElement('div'); label.className = 'w-label';
+                        label.textContent = w.name || '';
+                        div.appendChild(label);
+                    }
+
+                    const rez = document.createElement('div'); rez.className = 'resizer'; div.appendChild(rez);
+                    canvas.appendChild(div);
+                    drawWidget(body, w);
+                } catch(err) {
+                    console.error('[PROXIMA] render: erreur widget idx', idx, w.id, err.message);
+                }
+            });
+
+            // Force scroll canvas to origin so first widgets are always visible
+            const workspace = document.querySelector('.workspace');
+            if(workspace && active.widgets.length > 0 && selId) {
+                const sel = active.widgets.find(x => x.id === selId);
+                if(sel) {
+                    workspace.scrollTo({ left: Math.max(0, sel.x - 100), top: Math.max(0, sel.y - 100), behavior: 'smooth' });
+                }
+            }
+        }
+
+        function drawWidget(ctn, w) {
+            const div = ctn.closest('.widget');
+            if(w.isToggle && w.value > 0) div.classList.add('active-toggle');
+            else div.classList.remove('active-toggle');
+
+            if (w.type === 'pad') {
+                const p = document.createElement('div'); p.className = `pad-el ${w.value > 0 ? 'active' : ''}`;
+                
+                const activatePad = () => { p.classList.add('active'); };
+                const deactivatePad = () => { p.classList.remove('active'); };
+
+                p.onpointerdown = (e) => { 
+                    if(isEdit) return;
+                    window.activeTouchId = w.id;
+                    p.setPointerCapture(e.pointerId);
+                    if(w.isToggle) {
+                        w.value = (w.value > 0) ? 0.0 : 1.0;
+                        send(w.address, w.value);
+                        render();
+                    } else {
+                        activatePad();
+                        send(w.address, 1.0); 
+                    }
+                };
+                
+                const releaseHandler = () => {
+                    if(isEdit || w.isToggle) return;
+                    if(window.activeTouchId === w.id) {
+                        window.activeTouchId = null;
+                        deactivatePad();
+                        send(w.address, 0.0); 
+                    }
+                };
+
+                p.onpointerup = releaseHandler;
+                p.onpointercancel = releaseHandler;
+                
+                ctn.appendChild(p);
+            } else if (w.type === 'slider') {
+                const isV = w.dir !== 'h';
+                const f = document.createElement('div'); f.className = isV ? 'fader-v' : 'fader-h';
+                const fill = document.createElement('div'); 
+                fill.className = isV ? 'fader-fill' : 'fader-fill-h';
+                fill.style[isV ? 'height' : 'width'] = (w.value * 100) + '%';
+                f.appendChild(fill);
+                
+                let startPos, startVal;
+
+                f.onpointerdown = (e) => {
+                    if(isEdit) return;
+                    window.activeTouchId = w.id;
+                    f.setPointerCapture(e.pointerId);
+                    startPos = isV ? e.clientY : e.clientX;
+                    startVal = w.value || 0;
+                };
+                f.onpointermove = (e) => {
+                    if (window.activeTouchId !== w.id) return;
+                    const rect = f.getBoundingClientRect();
+                    const delta = isV ? (startPos - e.clientY) : (e.clientX - startPos);
+                    const range = isV ? rect.height : rect.width;
+                    let newVal = Math.max(0, Math.min(1, startVal + (delta / range)));
+                    
+                    w.value = newVal;
+                    fill.style[isV ? 'height' : 'width'] = (newVal * 100) + '%';
+                    throttledSend(w.address, newVal);
+                };
+                f.onpointerup = () => { window.activeTouchId = null; save(); };
+                ctn.appendChild(f);
+            } else if (w.type === 'position') {
+                const c = document.createElement('div'); c.className = 'pos-ctn';
+                const grid = document.createElement('div'); grid.className = 'pos-grid'; c.appendChild(grid);
+                const cross = document.createElement('div'); cross.className = 'pos-crosshair';
+                cross.style.left = (w.xVal || 0.5) * 100 + '%';
+                cross.style.top = (w.yVal || 0.5) * 100 + '%';
+                c.appendChild(cross);
+
+                // Bypass indication
+                if(w.isBypass) c.style.opacity = '0.4';
+
+                c.onpointerdown = c.onpointermove = (e) => {
+                    if(isEdit || w.isBypass) return;
+                    window.activeTouchId = w.id;
+                    c.setPointerCapture(e.pointerId);
+                    const r = c.getBoundingClientRect();
+                    w.xVal = Math.max(0, Math.min(1, (e.clientX - r.left) / r.width));
+                    w.yVal = Math.max(0, Math.min(1, (e.clientY - r.top) / r.height));
+                    cross.style.left = w.xVal * 100 + '%';
+                    cross.style.top = w.yVal * 100 + '%';
+                    throttledSend(w.address + '/x', w.xVal);
+                    throttledSend(w.address + '/y', w.yVal);
+                };
+                c.onpointerup = () => { window.activeTouchId = null; save(); };
+                ctn.appendChild(c);
+            } else if (w.type === 'switch') {
+                const s = document.createElement('div'); s.className = `switch-ctn ${w.value > 0.5 ? 'active' : ''}`;
+                s.innerHTML = `<div class="switch-label"><span class="l-off">OFF</span><span class="l-on">ON</span></div><div class="switch-handle"></div>`;
+                
+                s.onpointerdown = (e) => {
+                    if(isEdit) return;
+                    s.setPointerCapture(e.pointerId);
+                    if(w.isToggle !== false) { // Default to Toggle/Latch
+                        w.value = w.value > 0.5 ? 0.0 : 1.0;
+                        send(w.address, w.value);
+                        render();
+                    } else { // Momentary
+                        w.value = 1.0;
+                        send(w.address, 1.0);
+                        render();
+                    }
+                };
+                s.onpointerup = () => {
+                    if(isEdit) return;
+                    if(w.isToggle === false) { // Momentary release
+                        w.value = 0.0;
+                        send(w.address, 0.0);
+                        render();
+                    }
+                    save();
+                };
+                ctn.appendChild(s);
+            } else if (w.type === 'grid') {
+                const g = document.createElement('div'); g.className = 'grid-ctn'; g.style.gridTemplateColumns = `repeat(${w.cols || 4}, 1fr)`;
+                for (let i=0; i < ((w.rows || 2) * (w.cols || 4)); i++) {
+                    const label = (w.gridLabels && w.gridLabels[i]) || '';
+                    const c = document.createElement('div'); 
+                    c.className = `grid-cell ${w.gridStates && w.gridStates[i] ? 'active' : ''} ${isEdit && selId === w.id && selCell === i ? 'selected' : ''}`;
+                    c.innerHTML = label;
+                    c.onpointerdown = (e) => {
+                        if(isLearnMode && pendingAddress) {
+                            e.stopPropagation();
+                            selId = w.id;
+                            selCell = i;
+                            onLearned(pendingAddress);
+                            render();
+                        } else if(isEdit) { 
+                            e.stopPropagation(); 
+                            selCell = i; 
+                            openConfig(w.id); 
+                        }
+                        else { 
+                            if(w.isToggle) {
+                                if(!w.gridStates) w.gridStates={};
+                                w.gridStates[i] = w.gridStates[i] ? 0.0 : 1.0;
+                                send(resolveAddr(w, i), w.gridStates[i]);
+                                render();
+                            } else {
+                                c.classList.add('active'); send(resolveAddr(w, i), 1.0); 
+                            }
+                        }
+                    };
+                    c.onpointerup = () => { if(!isEdit && !w.isToggle) { c.classList.remove('active'); send(resolveAddr(w, i), 0.0); } };
+                    c.onmouseleave = () => { if(!isEdit && !w.isToggle && c.classList.contains('active')) { c.classList.remove('active'); send(resolveAddr(w, i), 0.0); } };
+                    g.appendChild(c);
+                }
+                ctn.appendChild(g);
+            }
+        }
+
+        function resolveAddr(w, i) {
+            if(w.gridMapping && w.gridMapping[i]) return w.gridMapping[i];
+            let a = w.address || '/test'; if(!a.includes('{')) a = a.replace(/\/$/, '') + '/{i}';
+            return a.replace('{i}', i).replace('{r}', Math.floor(i/w.cols)).replace('{c}', i%w.cols);
+        }
+
+        function applyFeedback(addr, val) {
+            let changed = false;
+            state.tabs.forEach(t => t.widgets.forEach(w => {
+                if(w.address === addr) { 
+                    if(w.value !== val) { w.value = val; changed = true; updateVisualSpecific(w); }
+                }
+                if(w.type === 'grid') {
+                    for(let i=0; i<(w.rows*w.cols); i++) {
+                        if(resolveAddr(w, i) === addr) { 
+                            if(!w.gridStates) w.gridStates={}; 
+                            if(w.gridStates[i] !== val) { w.gridStates[i] = val; changed = true; updateVisualSpecific(w); }
+                        }
+                    }
+                }
+            }));
+        }
+
+        function updateVisualSpecific(w) { 
+            const active = getActiveTab();
+            if(!active.widgets.includes(w)) return;
+            if(window.activeTouchId === w.id) return;
+
+            const el = document.querySelector(`.widget[data-id="${w.id}"]`);
+            if(!el) return;
+            const body = el.querySelector('.widget-body');
+            if(body) {
+                if(w.type === 'switch') {
+                    const s = body.querySelector('.switch-ctn');
+                    if(s) s.classList.toggle('active', w.value > 0.5);
+                } else if(w.type === 'pad') {
+                    const p = body.querySelector('.pad-el');
+                    if(p) p.classList.toggle('active', w.value > 0);
+                } else if(w.type === 'slider') {
+                    const fill = body.querySelector(w.dir==='h'?'.fader-fill-h':'.fader-fill');
+                    if(fill) fill.style[w.dir==='h'?'width':'height'] = (w.value * 100) + '%';
+                } else if(w.type === 'grid') {
+                    const cells = body.querySelectorAll('.grid-cell');
+                    cells.forEach((c, i) => {
+                        if(w.gridStates && w.gridStates[i]) c.classList.add('active');
+                        else c.classList.remove('active');
+                    });
+                }
+            }
+        }
+
+        // --- Config ---
+        function openConfig(id) { selId = id; document.getElementById('side-r').classList.remove('collapsed'); render(); renderConfigUI(); }
+        function closeConfig() { selId = null; selCell = null; document.getElementById('side-r').classList.add('collapsed'); render(); }
+        
+        function createWidget(type, sub) {
+            // Auto-sortir du mode LIVE et entrer en mode Edit pour retour visuel immédiat
+            if (isLiveMode) applyLiveMode(false);
+            if (!isEdit) applyEditMode(true);
+
+            const tab = getActiveTab();
+            if (!tab) { console.error('[PROXIMA] createWidget: aucun onglet actif'); return; }
+
+            // CRITIQUE: Synchroniser state.activeTab avec l'onglet qui va recevoir le widget
+            // Cela garantit que render() affichera le bon onglet après l'ajout
+            state.activeTab = tab.id;
+
+            const uid = Date.now() + '';
+            const w = { id: uid, type, x: 50, y: 50, w: 120, h: 120, address: '/' + type + '-' + uid.slice(-4), value: 0 };
+
+            if (type === 'slider') {
+                w.dir = sub || 'v';
+                if (w.dir === 'h') { w.w = 250; w.h = 100; }
+                else { w.w = 100; w.h = 250; }
+            }
+            if (type === 'position') { w.w = 250; w.h = 250; w.xVal = 0.5; w.yVal = 0.5; w.isBypass = false; }
+            if (type === 'switch') { w.w = 180; w.h = 80; w.isToggle = true; }
+            if (type === 'grid') { w.w = 400; w.h = 300; w.rows = 2; w.cols = 4; w.gridStates = {}; w.gridMapping = {}; }
+
+            // Cascade placement: each new widget offset by 30px from last
+            const offset = tab.widgets.length * 30;
+            w.x = 50 + offset;
+            w.y = 50 + offset;
+
+            tab.widgets.push(w);
+            console.log('[PROXIMA] Widget créé:', type, 'id:', uid, '| Tab:', tab.name, '| Total:', tab.widgets.length);
+            save();
+            render();
+            openConfig(w.id);
+        }
+
+        function renderConfigUI() {
+            const ctn = document.getElementById('config-ui');
+            const active = getActiveTab();
+            const w = active.widgets.find(x => x.id === selId); 
+            if(!w) return;
+            const currentA = (w.type==='grid' && selCell !== null) ? (w.gridMapping && w.gridMapping[selCell] || resolveAddr(w, selCell)) : w.address;
+            
+            const colors = [
+                {n:'Cyan', c:'#00d2ff'}, {n:'Red', c:'#ff4d4d'}, {n:'Yellow', c:'#ffcc00'}, 
+                {n:'Green', c:'#00ff88'}, {n:'Purple', c:'#cc00ff'}, {n:'White', c:'#ffffff'}
+            ];
+
+            let html = `
+                <div class="sidebar-section" style="padding:0; border:none;">
+                    <div class="sidebar-title">Couleur</div>
+                    <div style="display:grid; grid-template-columns: repeat(4, 1fr); gap:6px; margin-bottom:20px;">
+                        ${colors.map(c => `
+                            <div onclick="setWidgetProp('${w.id}', 'color', '${c.c}'); renderConfigUI();" 
+                                 style="height:35px; background:${c.c}; border-radius:8px; cursor:pointer; border:2px solid ${w.color===c.c?'#fff':'transparent'}; box-shadow: 0 2px 10px ${c.c}44;">
+                            </div>`).join('')}
+                        <div onclick="setWidgetProp('${w.id}', 'color', null); renderConfigUI();" 
+                             style="height:35px; background:rgba(255,255,255,0.05); border-radius:8px; border:2px solid ${!w.color?'#fff':'transparent'}; display:flex; align-items:center; justify-content:center; font-size:9px; font-weight:800; cursor:pointer; color:var(--dim);">
+                             AUTO
+                        </div>
+                    </div>
+                </div>
+
+                <div class="sidebar-title">${(w.type==='grid' && selCell!==null) ? 'Réglage Case #'+selCell : 'Réglage Global'}</div>
+                
+                ${(w.type === 'grid' && selCell !== null) ? `
+                <div style="display:flex; gap:10px; margin-bottom:15px;">
+                    <button class="nav-btn" style="flex:1" onclick="selCell = Math.max(0, selCell-1); renderConfigUI(); render();">◀ Précédent</button>
+                    <button class="nav-btn" style="flex:1" onclick="selCell = Math.min((w.rows*w.cols)-1, selCell+1); renderConfigUI(); render();">Suivant ▶</button>
+                </div>
+                ` : ''}
+                
+                <div class="sidebar-title" style="margin-top:10px; opacity:0.6;">Nom / Label</div>
+                <input type="text" class="input" placeholder="Saisir un nom..." 
+                       value="${(w.type==='grid' && selCell !== null) ? (w.gridLabels && w.gridLabels[selCell] || '') : (w.name || '')}" 
+                       oninput="updateWidgetName('${w.id}', this.value, ${selCell})"
+                       onfocus="this.select()">
+
+                <div class="sidebar-title" style="opacity:0.6;">Adresse OSC</div>
+                <div style="display:flex; gap:5px;"><input type="text" id="osc-addr" class="input" value="${currentA}" oninput="updateMapping(this.value)" onfocus="this.select()"></div>
+                
+                ${isLearnMode ? `
+                <div style="background:rgba(0,255,100,0.12); border:1px solid rgba(0,255,100,0.4); border-radius:12px; padding:12px 14px; margin-bottom:12px;">
+                    <div style="display:flex;align-items:center;gap:10px;margin-bottom:8px;">
+                        <div style="width:10px;height:10px;border-radius:50%;background:#00ff88;box-shadow:0 0 10px #00ff88;animation:pulse 1s infinite;"></div>
+                        <span style="font-size:0.65rem;font-weight:800;color:#00ff88;">LEARN ACTIF</span>
+                    </div>
+                    <div style="font-size:0.6rem;color:rgba(200,255,200,0.8);line-height:1.6;">
+                        Dans Resolume Arena :<br>
+                        <b style="color:#00ff88;">Clic droit</b> sur un parametre<br>
+                        → <b style="color:#00ff88;">Shortcut</b> → <b style="color:#00ff88;">Edit OSC</b><br>
+                        L'adresse est capturee automatiquement ici.
+                    </div>
+                </div>
+                ` : `
+                <div style="background:rgba(255,100,0,0.08); border:1px solid rgba(255,100,0,0.2); border-radius:12px; padding:10px 14px; margin-bottom:12px; cursor:pointer;" onclick="toggleLearnMode()">
+                    <div style="font-size:0.6rem;font-weight:800;color:rgba(255,150,0,0.7);margin-bottom:4px;">🎯 LEARN desactive — Cliquer pour activer</div>
+                    <div style="font-size:0.55rem;color:rgba(255,150,0,0.5);line-height:1.5;">Puis dans Resolume : clic droit sur un parametre → Shortcut → Edit OSC</div>
+                </div>
+                `}
+
+                <div style="display:grid; grid-template-columns: 1fr 1fr; gap:5px; margin-bottom:20px;">
+                    <button class="btn ${isLearnMode?'active accent':''}" onclick="${isLearnMode?'startLearn()':'toggleLearnMode()'}" 
+                            style="${isLearnMode?'':'opacity:0.5;'}" title="${isLearnMode?'Capturer la prochaine adresse OSC':'Activez le mode LEARN en haut'}">
+                        🎯 ${isLearnMode ? 'CAPTURER' : 'LEARN OFF'}
+                    </button>
+                    <button class="btn ${isFrozen?'active':''}" onclick="isFrozen=!isFrozen; renderConfigUI();">${isFrozen?'🧊 GELÉ':'❄️ FREEZE'}</button>
+                </div>
+                
+                ${(w.type==='pad' || w.type==='grid' || w.type==='switch') ? `
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;">
+                        <input type="checkbox" id="toggle-cb" style="width:20px; height:20px;" ${w.isToggle?'checked':''} 
+                               onchange="setWidgetProp('${w.id}', 'isToggle', this.checked); renderConfigUI();">
+                        <label for="toggle-cb" style="font-size:0.7rem; font-weight:800; cursor:pointer;">MODE BASCULE (ON/OFF)</label>
+                    </div>
+                    ${w.type==='switch' ? `<div style="font-size:0.6rem; color:var(--dim); margin-top:-15px; margin-bottom:15px; margin-left:30px;">Désactiver pour un mode 'Flash' (Momentané)</div>`:''}
+                ` : ''}
+            `;
+
+            if (oscHistory.length > 0) {
+                html += `<div class="sidebar-title" style="opacity:0.6;">Historique OSC</div>
+                <div style="max-height:160px; overflow:auto; background:rgba(0,0,0,0.5); border-radius:12px; padding:8px; margin-bottom:20px; border:1px solid var(--border);">
+                    ${oscHistory.map(a => `<div onclick="updateMapping('${a}'); renderConfigUI();" style="font-size:0.65rem; padding:10px; cursor:pointer; border-bottom:1px solid rgba(255,255,255,0.03); color:var(--accent); white-space:nowrap; overflow:hidden; text-overflow:ellipsis; font-family:monospace;">${a}</div>`).join('')}
+                </div>`;
+            }
+
+            if (w.type === 'grid') {
+                html += `
+                    <div class="sidebar-title" style="opacity:0.6;">Format Grille</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px;">
+                        <div><small style="color:var(--dim)">LIGNES</small><input type="number" class="input" value="${w.rows || 2}" oninput="setWidgetProp('${w.id}', 'rows', parseInt(this.value))"></div>
+                        <div><small style="color:var(--dim)">COLS</small><input type="number" class="input" value="${w.cols || 4}" oninput="setWidgetProp('${w.id}', 'cols', parseInt(this.value))"></div>
+                    </div>
+                `;
+            }
+
+            html += `
+                ${(w.type==='position') ? `
+                    <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; background:rgba(255,100,100,0.1); padding:12px; border-radius:12px; border: 1px solid rgba(255,100,100,0.2);">
+                        <input type="checkbox" id="bypass-cb" style="width:20px; height:20px;" ${w.isBypass?'checked':''} 
+                               onchange="setWidgetProp('${w.id}', 'isBypass', this.checked); send(w.address+'/bypass', this.checked?1.0:0.0); renderConfigUI();">
+                        <label for="bypass-cb" style="font-size:0.7rem; font-weight:800; cursor:pointer; color:#ff4d4d;">BYPASS (X/Y GELÉS)</label>
+                    </div>
+                ` : ''}
+
+                <div class="sidebar-title" style="opacity:0.6;">Dimensions (px)</div>
+                <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px;">
+                    <div><small style="color:var(--dim)">LARGEUR</small><input type="number" class="input" value="${Math.round(w.w)}" oninput="setWidgetProp('${w.id}', 'w', parseInt(this.value))"></div>
+                    <div><small style="color:var(--dim)">HAUTEUR</small><input type="number" class="input" value="${Math.round(w.h)}" oninput="setWidgetProp('${w.id}', 'h', parseInt(this.value))"></div>
+                </div>
+                <div style="display:flex; gap:10px; margin-top:20px;">
+                   <button class="btn accent" onclick="closeConfig()">✓ APPLIQUER</button>
+                   <button class="btn danger" onclick="confirmDeleteWidget()">🗑️ SUPPRIMER</button>
+                </div>
+            `;
+
+            ctn.innerHTML = html;
+        }
+
+        function setWidgetProp(id, prop, val) {
+            const w = getActiveTab().widgets.find(x => x.id === id);
+            if(!w) return;
+            if(val === null) delete w[prop];
+            else w[prop] = val;
+            save(); render();
+        }
+
+        function updateWidgetName(id, val, cellIndex) {
+            const w = getActiveTab().widgets.find(x => x.id === id);
+            if(!w) return;
+            if(w.type === 'grid' && cellIndex !== null) {
+                if(!w.gridLabels) w.gridLabels = {};
+                w.gridLabels[cellIndex] = val;
+            } else {
+                w.name = val;
+            }
+            save(); render();
+        }
+
+        function updateMapping(v) { 
+            const w = getActiveTab().widgets.find(x => x.id === selId); 
+            if(!w) return;
+            // Sanitize: split by space and take first part (Fix Resolume multi-path copy)
+            const cleanAddr = v.split(' ')[0].trim();
+            if(w.type === 'grid' && selCell !== null) { 
+                if(!w.gridMapping) w.gridMapping = {};
+                w.gridMapping[selCell] = cleanAddr; 
+            } else { w.address = cleanAddr; }
+            save();
+        }
+
+        function onLearned(addr) {
+            if(!addr) return;
+            const clean = addr.split(' ')[0].trim();
+            if(selId) {
+                updateMapping(clean);
+                const bar = document.getElementById('mapping-status');
+                if(bar) {
+                    bar.style.background = '#00d2ff';
+                    bar.innerHTML = `<span>✅ ASSIGNÉ : ${clean}</span>`;
+                    setTimeout(() => {
+                        bar.classList.remove('active');
+                        bar.style.background = '';
+                        bar.innerHTML = `<span>🎯 PRÊT POUR MAPPING</span> <b id="captured-addr">...</b>`;
+                    }, 1500);
+                }
+            }
+            pendingAddress = null;
+        }
+
+        // --- Modal System ---
+        function openModal(title, body, confirmCb, isInput = false, defaultVal = '') {
+            document.getElementById('m-title').textContent = title;
+            document.getElementById('m-body').textContent = body;
+            const input = document.getElementById('m-input');
+            input.style.display = isInput ? 'block' : 'none';
+            input.value = defaultVal;
+            document.getElementById('modal').classList.add('active');
+            if(isInput) { 
+                input.focus(); input.select(); 
+                input.onkeydown = (e) => { 
+                    if(e.key === 'Enter') { confirmCb(input.value); closeModal(); }
+                    if(e.key === 'Escape') closeModal();
+                };
+            }
+            document.getElementById('m-confirm').onclick = () => { confirmCb(input.value); closeModal(); };
+        }
+        function closeModal() { document.getElementById('modal').classList.remove('active'); }
+
+        function promptCreateTab() { openModal('Nouvel Onglet', 'Saisir le nom', (v) => { state.tabs.push({id: 'tab-'+Date.now(), name: v || 'Onglet', widgets: []}); save(); render(); }, true); }
+        function promptRenameTab(id, e) { e.stopPropagation(); const t = state.tabs.find(x=>x.id===id); openModal('Renommer', 'Nouveau nom pour '+t.name, (v) => { t.name = v; save(); render(); }, true, t.name); }
+        function confirmDeleteTab(id, e) { e.stopPropagation(); openModal('Supprimer', 'Voulez-vous supprimer cet onglet ?', () => { state.tabs = state.tabs.filter(x=>x.id!==id); save(); render(); }); }
+        function confirmDeleteWidget() { openModal('Supprimer Bloc', 'Effacer définitivement ?', () => { deleteWidget(); }); }
+        function deleteWidget() { getActiveTab().widgets = getActiveTab().widgets.filter(x=>x.id!==selId); save(); closeConfig(); }
+
+
+
+        function startLearn() { 
+            if(!isLearnMode) {
+                alert('Activez le mode LEARN (bouton en haut) avant de capturer une adresse OSC.');
+                return;
+            }
+            ws.send(JSON.stringify({address: "/__start_learn__"}));
+        }
+
+        function toggleLearnMode() {
+            isLearnMode = !isLearnMode;
+            const btn = document.getElementById('learn-btn');
+            const bar = document.getElementById('mapping-status');
+            btn.classList.toggle('active', isLearnMode);
+            btn.innerHTML = isLearnMode ? '🟢 LEARN ON' : '🎯 LEARN';
+            
+            if (isLearnMode) {
+                bar.classList.add('active');
+                document.getElementById('captured-addr').textContent = 'Dans Resolume: clic droit > Shortcut > Edit OSC...';
+                ws.send(JSON.stringify({address: "/__start_learn__"}));
+            } else {
+                stopLearnMode();
+            }
+            if(isEdit && selId) renderConfigUI(); 
+        }
+
+        function stopLearnMode() {
+            isLearnMode = false;
+            pendingAddress = null;
+            const btn = document.getElementById('learn-btn');
+            const bar = document.getElementById('mapping-status');
+            if(btn) { btn.classList.remove('active'); btn.innerHTML = '🎯 LEARN'; }
+            if(bar) bar.classList.remove('active');
+            if(ws && ws.readyState === 1) ws.send(JSON.stringify({address: "/__stop_learn__"}));
+            oscHistory = [];
+        }
+
+        function hexToRgb(hex) {
+            const r = parseInt(hex.slice(1, 3), 16), g = parseInt(hex.slice(3, 5), 16), b = parseInt(hex.slice(5, 7), 16);
+            return `${r}, ${g}, ${b}`;
+        }
+
+        function initInteract() {
+            // Build snap targets: 25px grid + edges of sibling widgets
+            function makeSnapTargets() {
+                const gridTarget = interact.snappers.grid({ x: 25, y: 25, range: 14 });
+
+                // Widget-edge snap function (evaluated live on each pointer move)
+                function edgeSnap(x, y, interaction) {
+                    if (!isSnap) return null;
+                    let best = null, bestDist = Infinity;
+                    const canvas = document.getElementById('canvas');
+                    const canvasRect = canvas.getBoundingClientRect();
+                    document.querySelectorAll('.widget').forEach(el => {
+                        if (el === interaction.element) return;
+                        const r = el.getBoundingClientRect();
+                        // Convert to canvas-relative coords
+                        const pts = [
+                            { x: r.left - canvasRect.left, y: r.top - canvasRect.top },
+                            { x: r.right - canvasRect.left, y: r.top - canvasRect.top },
+                            { x: r.left - canvasRect.left, y: r.bottom - canvasRect.top },
+                            { x: r.right - canvasRect.left, y: r.bottom - canvasRect.top },
+                            { x: r.left + r.width/2 - canvasRect.left, y: r.top - canvasRect.top },
+                            { x: r.left + r.width/2 - canvasRect.left, y: r.bottom - canvasRect.top },
+                            { x: r.left - canvasRect.left, y: r.top + r.height/2 - canvasRect.top },
+                            { x: r.right - canvasRect.left, y: r.top + r.height/2 - canvasRect.top },
+                        ];
+                        pts.forEach(pt => {
+                            const d = Math.hypot(x - pt.x, y - pt.y);
+                            if (d < bestDist) { bestDist = d; best = pt; }
+                        });
+                    });
+                    return (best && bestDist <= 20) ? { ...best, range: 20 } : null;
+                }
+
+                return isSnap 
+                    ? [gridTarget, edgeSnap]
+                    : [interact.snappers.grid({ x: 1, y: 1, range: 1 })];
+            }
+
+            interact('.widget').draggable({ 
+                enabled: false,
+                modifiers: [
+                    interact.modifiers.snap({
+                        targets: makeSnapTargets(),
+                        range: 20,
+                        relativePoints: [{x:0,y:0},{x:1,y:0},{x:0,y:1},{x:1,y:1}],
+                        endOnly: false,
+                    }),
+                ],
+                listeners: { 
+                    start(e) { e.target.classList.add('snapping'); },
+                    move(e) {
+                        const id = e.target.getAttribute('data-id');
+                        const w = getActiveTab().widgets.find(x => x.id === id);
+                        if(!w) return;
+                        w.x += e.dx; w.y += e.dy; 
+                        w.x = Math.max(0, w.x); w.y = Math.max(0, w.y);
+                        e.target.style.left = w.x + 'px'; 
+                        e.target.style.top = w.y + 'px';
+                    }, 
+                    end(e) { e.target.classList.remove('snapping'); save(); }
+                } 
+            }).resizable({ 
+                enabled: false,
+                edges: { right:true, bottom:true }, 
+                modifiers: [
+                    interact.modifiers.restrictSize({ minWidth: 50, minHeight: 40 }),
+                ],
+                listeners: { 
+                    move(e) {
+                        const id = e.target.getAttribute('data-id');
+                        const w = getActiveTab().widgets.find(x => x.id === id);
+                        if(!w) return;
+                        w.w = e.rect.width; w.h = e.rect.height; 
+                        e.target.style.width = w.w+'px'; 
+                        e.target.style.height = w.h+'px';
+                    }, 
+                    end: save 
+                } 
+            });
+        }
+
+        function toggleSnap() {
+            isSnap = !isSnap;
+            document.getElementById('snap-btn').classList.toggle('active', isSnap);
+            initInteract(); // Reinitialize with new snap targets
+            interact('.widget').draggable({ enabled: isEdit });
+            interact('.widget').resizable({ enabled: isEdit });
+        }
+
+        initInteract();
+        document.getElementById('snap-btn').classList.add('active');
+
+        // --- INIT : Synchronise DOM avec l'état initial des variables ---
+        applyLiveMode(isLiveMode); // Applique live-active + label du bouton dès le démarrage
+
+        connect(); render();
+    </script>
+</body>
+</html>
