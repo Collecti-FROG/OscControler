@@ -10,3 +10,7 @@ services:
       - "7000:7000/udp"
       - "7001:7001/udp"
     command: sleep infinity
+    extra_hosts:
+      - "host.docker.internal:host-gateway" # Permet au conteneur de résoudre l'adresse de l'hôte
+    environment:
+    - TARGET_HOST=host.docker.internal

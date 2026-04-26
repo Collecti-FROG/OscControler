@@ -60,6 +60,8 @@ learn_stats = {}
 last_learn_time = 0
 is_learning = False
 last_capture_time = 0 # Lock for 2 seconds after a successful capture
+targethost = os.getenv('TARGET_HOST', '127.0.0.1')
+localhost = '127.0.0.1'
 
 LAYOUT_FILE = "layout.json"
 
@@ -196,7 +198,7 @@ async def poll_resolume_selection():
         if is_learning:
             try:
                 # Poll composition JSON from localhost:8080
-                with urllib.request.urlopen("http://127.0.0.1:8080/api/v1/composition", timeout=0.5) as response:
+                with urllib.request.urlopen(f"http://{localhost}:8080/api/v1/composition", timeout=0.5) as response:
                     data = json.loads(response.read().decode())
                     selected_addr = find_selected_osc(data)
                     
@@ -240,7 +242,7 @@ def get_windows_ips():
     try:
         output = subprocess.check_output("ipconfig", encoding="utf-8", errors="ignore")
     except:
-        return '127.0.0.1', ['127.0.0.1']
+        return localhost, [localhost]
     
     adapters = output.split("\n\n")
     valid_ips = []
@@ -271,7 +273,7 @@ def get_windows_ips():
     valid_ips.sort(key=lambda x: x[1], reverse=True)
     
     sorted_ips = [x[0] for x in valid_ips]
-    main_ip = sorted_ips[0] if sorted_ips else '127.0.0.1'
+    main_ip = sorted_ips[0] if sorted_ips else localhost
     
     return main_ip, sorted_ips
 
@@ -306,10 +308,10 @@ async def main():
 
     global osc_clients
     osc_clients = []
-    osc_clients.append(SimpleUDPClient("127.0.0.1", OSC_PORT))
+    osc_clients.append(SimpleUDPClient(targethost, OSC_PORT))
     
     for ip in all_ips:
-        if ip != '127.0.0.1':
+        if ip != localhost:
             osc_clients.append(SimpleUDPClient(ip, OSC_PORT))
 
     asyncio.create_task(poll_resolume_selection())
