@@ -211,6 +211,28 @@
             50% { box-shadow: 0 0 18px rgba(0,255,136,0.9); }
         }
         .grid-cell.selected { border-color: #fff; box-shadow: 0 0 10px #fff; z-index: 5; }
+
+        /* Color Pad Grid */
+        .colorpad-ctn { display: grid; gap: 6px; width: 100%; height: 100%; }
+        .colorpad-cell {
+            border-radius: 10px; border: 2px solid rgba(0,0,0,0.25);
+            transition: filter 0.15s, border-color 0.15s, box-shadow 0.15s;
+            position: relative; display: flex; align-items: center; justify-content: center;
+            font-size: 0.65rem; font-weight: 700; text-transform: uppercase; text-align: center;
+            padding: 4px; cursor: pointer; overflow: hidden;
+            color: rgba(255,255,255,0.95); text-shadow: 0 1px 6px rgba(0,0,0,0.85);
+            filter: brightness(0.5) saturate(0.7);
+        }
+        .colorpad-cell.active {
+            border-color: rgba(255,255,255,0.85) !important;
+            filter: brightness(1.1) saturate(1.1);
+            box-shadow: 0 0 18px rgba(255,255,255,0.25);
+        }
+        .colorpad-cell.edit-sel {
+            border-color: #fff !important;
+            filter: brightness(1) !important;
+            box-shadow: 0 0 14px rgba(255,255,255,0.55) !important;
+        }
         
         /* Mapping Overlay */
         .mapping-bar {
@@ -267,11 +289,18 @@
                 <button class="btn accent" onclick="createWidget('switch')">🔘 SWITCH ON/OFF</button>
                 <button class="btn accent" onclick="createWidget('position')">📍 POSITION (XY)</button>
                 <button class="btn accent" onclick="createWidget('grid')">Ajouter GRILLE</button>
+                <button class="btn accent" onclick="createWidget('colorpad')">🎨 GRILLE COULEURS</button>
             </div>
             <div class="sidebar-section">
                 <div class="sidebar-title">Onglets</div>
                 <div id="tab-list"></div>
                 <button class="btn" style="border-style:dashed; margin-top:10px;" onclick="promptCreateTab()">+ Ajouter Onglet</button>
+                <div style="margin-top:15px; padding-top:15px; border-top:1px solid var(--border);">
+                    <div class="sidebar-title" style="opacity:0.6;">Changement d'onglet via OSC</div>
+                    <input type="text" class="input" id="tab-osc-addr" placeholder="/adresse/osc"
+                           oninput="state.tabSwitchAddress = this.value.trim(); save()">
+                    <div style="font-size:0.55rem; color:var(--dim); margin-top:-4px;">Valeur OSC reçue : 0 → onglet 1, 1 → onglet 2…</div>
+                </div>
             </div>
             <div class="sidebar-footer">
                 <div class="sidebar-title" style="margin-bottom:10px">Connexion Mobile</div>
@@ -324,9 +353,10 @@
                         }
                     });
                 }
+                if (!parsed.tabSwitchAddress) parsed.tabSwitchAddress = '';
                 return parsed;
             } catch(e) {
-                return {tabs:[{id:'tab-main',name:'Main',widgets:[]}], activeTab:'tab-main'};
+                return {tabs:[{id:'tab-main',name:'Main',widgets:[]}], activeTab:'tab-main', tabSwitchAddress:''};
             }
         })();
         let isEdit = false;
@@ -508,6 +538,8 @@
             });
             const tabNameEl = document.getElementById('active-tab-name');
             if(tabNameEl) tabNameEl.textContent = active.name.toUpperCase();
+            const tabOscInput = document.getElementById('tab-osc-addr');
+            if(tabOscInput) tabOscInput.value = state.tabSwitchAddress || '';
             
             const canvas = document.getElementById('canvas');
             if (!canvas) { console.error('[PROXIMA] render: #canvas introuvable'); return; }
@@ -537,7 +569,7 @@
                     };
                     const body = document.createElement('div'); body.className = 'widget-body'; div.appendChild(body);
                     
-                    if(w.type !== 'grid') {
+                    if(w.type !== 'grid' && w.type !== 'colorpad') {
                         const label = document.createElement('div'); label.className = 'w-label';
                         label.textContent = w.name || '';
                         div.appendChild(label);
@@ -685,7 +717,7 @@
                 const g = document.createElement('div'); g.className = 'grid-ctn'; g.style.gridTemplateColumns = `repeat(${w.cols || 4}, 1fr)`;
                 for (let i=0; i < ((w.rows || 2) * (w.cols || 4)); i++) {
                     const label = (w.gridLabels && w.gridLabels[i]) || '';
-                    const c = document.createElement('div'); 
+                    const c = document.createElement('div');
                     c.className = `grid-cell ${w.gridStates && w.gridStates[i] ? 'active' : ''} ${isEdit && selId === w.id && selCell === i ? 'selected' : ''}`;
                     c.innerHTML = label;
                     c.onpointerdown = (e) => {
@@ -695,24 +727,53 @@
                             selCell = i;
                             onLearned(pendingAddress);
                             render();
-                        } else if(isEdit) { 
-                            e.stopPropagation(); 
-                            selCell = i; 
-                            openConfig(w.id); 
+                        } else if(isEdit) {
+                            e.stopPropagation();
+                            selCell = i;
+                            openConfig(w.id);
                         }
-                        else { 
+                        else {
                             if(w.isToggle) {
                                 if(!w.gridStates) w.gridStates={};
                                 w.gridStates[i] = w.gridStates[i] ? 0.0 : 1.0;
                                 send(resolveAddr(w, i), w.gridStates[i]);
                                 render();
                             } else {
-                                c.classList.add('active'); send(resolveAddr(w, i), 1.0); 
+                                c.classList.add('active'); send(resolveAddr(w, i), 1.0);
                             }
                         }
                     };
                     c.onpointerup = () => { if(!isEdit && !w.isToggle) { c.classList.remove('active'); send(resolveAddr(w, i), 0.0); } };
                     c.onmouseleave = () => { if(!isEdit && !w.isToggle && c.classList.contains('active')) { c.classList.remove('active'); send(resolveAddr(w, i), 0.0); } };
+                    g.appendChild(c);
+                }
+                ctn.appendChild(g);
+            } else if (w.type === 'colorpad') {
+                const g = document.createElement('div');
+                g.className = 'colorpad-ctn';
+                g.style.gridTemplateColumns = `repeat(${w.cols || 3}, 1fr)`;
+                const total = (w.rows || 2) * (w.cols || 3);
+                for (let i = 0; i < total; i++) {
+                    const cellColor = (w.padColors && w.padColors[i]) || '#444444';
+                    const isActive = w.activeIndex === i;
+                    const isEditSel = isEdit && selId === w.id && selCell === i;
+                    const c = document.createElement('div');
+                    c.className = `colorpad-cell${isActive ? ' active' : ''}${isEditSel ? ' edit-sel' : ''}`;
+                    c.style.background = cellColor;
+                    c.textContent = (w.padLabels && w.padLabels[i]) || '';
+                    c.onpointerdown = (e) => {
+                        if(isLearnMode && pendingAddress) {
+                            e.stopPropagation(); selId = w.id; selCell = i;
+                            onLearned(pendingAddress); render();
+                        } else if(isEdit) {
+                            e.stopPropagation(); selCell = i; openConfig(w.id);
+                        } else {
+                            const val = (w.padValues && w.padValues[i] !== undefined) ? w.padValues[i] : i;
+                            w.activeIndex = i;
+                            send(w.address, val);
+                            render(); save();
+                        }
+                    };
                     g.appendChild(c);
                 }
                 ctn.appendChild(g);
@@ -728,18 +789,32 @@
         function applyFeedback(addr, val) {
             let changed = false;
             state.tabs.forEach(t => t.widgets.forEach(w => {
-                if(w.address === addr) { 
+                if(w.address === addr) {
                     if(w.value !== val) { w.value = val; changed = true; updateVisualSpecific(w); }
                 }
                 if(w.type === 'grid') {
                     for(let i=0; i<(w.rows*w.cols); i++) {
-                        if(resolveAddr(w, i) === addr) { 
-                            if(!w.gridStates) w.gridStates={}; 
+                        if(resolveAddr(w, i) === addr) {
+                            if(!w.gridStates) w.gridStates={};
                             if(w.gridStates[i] !== val) { w.gridStates[i] = val; changed = true; updateVisualSpecific(w); }
                         }
                     }
                 }
+                if(w.type === 'colorpad' && w.address === addr) {
+                    const total = (w.rows || 2) * (w.cols || 3);
+                    for(let i = 0; i < total; i++) {
+                        const cellVal = (w.padValues && w.padValues[i] !== undefined) ? w.padValues[i] : i;
+                        if(Math.abs(cellVal - val) < 0.001) { w.activeIndex = i; changed = true; updateVisualSpecific(w); break; }
+                    }
+                }
             }));
+            if(state.tabSwitchAddress && addr === state.tabSwitchAddress) {
+                const tabIdx = Math.round(val);
+                if(tabIdx >= 0 && tabIdx < state.tabs.length) {
+                    state.activeTab = state.tabs[tabIdx].id;
+                    render();
+                }
+            }
         }
 
         function updateVisualSpecific(w) { 
@@ -766,6 +841,9 @@
                         if(w.gridStates && w.gridStates[i]) c.classList.add('active');
                         else c.classList.remove('active');
                     });
+                } else if(w.type === 'colorpad') {
+                    const cells = body.querySelectorAll('.colorpad-cell');
+                    cells.forEach((c, i) => { c.classList.toggle('active', w.activeIndex === i); });
                 }
             }
         }
@@ -797,6 +875,12 @@
             if (type === 'position') { w.w = 250; w.h = 250; w.xVal = 0.5; w.yVal = 0.5; w.isBypass = false; }
             if (type === 'switch') { w.w = 180; w.h = 80; w.isToggle = true; }
             if (type === 'grid') { w.w = 400; w.h = 300; w.rows = 2; w.cols = 4; w.gridStates = {}; w.gridMapping = {}; }
+            if (type === 'colorpad') {
+                w.w = 300; w.h = 200; w.rows = 2; w.cols = 3;
+                w.padColors = {}; w.padValues = {}; w.padLabels = {}; w.activeIndex = null;
+                const defaults = ['#ff4d4d','#ff8800','#ffcc00','#00ff88','#00d2ff','#cc00ff'];
+                for(let i = 0; i < w.rows * w.cols; i++) { w.padColors[i] = defaults[i % defaults.length]; w.padValues[i] = i; w.padLabels[i] = ''; }
+            }
 
             // Cascade placement: each new widget offset by 30px from last
             const offset = tab.widgets.length * 30;
@@ -837,18 +921,18 @@
                     </div>
                 </div>
 
-                <div class="sidebar-title">${(w.type==='grid' && selCell!==null) ? 'Réglage Case #'+selCell : 'Réglage Global'}</div>
-                
-                ${(w.type === 'grid' && selCell !== null) ? `
+                <div class="sidebar-title">${((w.type==='grid'||w.type==='colorpad') && selCell!==null) ? 'Réglage Pad #'+selCell : 'Réglage Global'}</div>
+
+                ${((w.type === 'grid' || w.type === 'colorpad') && selCell !== null) ? `
                 <div style="display:flex; gap:10px; margin-bottom:15px;">
                     <button class="nav-btn" style="flex:1" onclick="selCell = Math.max(0, selCell-1); renderConfigUI(); render();">◀ Précédent</button>
-                    <button class="nav-btn" style="flex:1" onclick="selCell = Math.min((w.rows*w.cols)-1, selCell+1); renderConfigUI(); render();">Suivant ▶</button>
+                    <button class="nav-btn" style="flex:1" onclick="selCell = Math.min(${(w.rows||2)*(w.cols||3)-1}, selCell+1); renderConfigUI(); render();">Suivant ▶</button>
                 </div>
                 ` : ''}
                 
                 <div class="sidebar-title" style="margin-top:10px; opacity:0.6;">Nom / Label</div>
-                <input type="text" class="input" placeholder="Saisir un nom..." 
-                       value="${(w.type==='grid' && selCell !== null) ? (w.gridLabels && w.gridLabels[selCell] || '') : (w.name || '')}" 
+                <input type="text" class="input" placeholder="Saisir un nom..."
+                       value="${w.type==='grid' && selCell!==null ? (w.gridLabels&&w.gridLabels[selCell]||'') : w.type==='colorpad' && selCell!==null ? (w.padLabels&&w.padLabels[selCell]||'') : (w.name||'')}"
                        oninput="updateWidgetName('${w.id}', this.value, ${selCell})"
                        onfocus="this.select()">
 
@@ -883,7 +967,7 @@
                     <button class="btn ${isFrozen?'active':''}" onclick="isFrozen=!isFrozen; renderConfigUI();">${isFrozen?'🧊 GELÉ':'❄️ FREEZE'}</button>
                 </div>
                 
-                ${(w.type==='pad' || w.type==='grid' || w.type==='switch') ? `
+                ${(w.type==='pad' || w.type==='grid' || w.type==='switch') && w.type!=='colorpad' ? `
                     <div style="display:flex; align-items:center; gap:10px; margin-bottom:20px; background:rgba(255,255,255,0.05); padding:12px; border-radius:12px;">
                         <input type="checkbox" id="toggle-cb" style="width:20px; height:20px;" ${w.isToggle?'checked':''} 
                                onchange="setWidgetProp('${w.id}', 'isToggle', this.checked); renderConfigUI();">
@@ -906,6 +990,43 @@
                     <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px;">
                         <div><small style="color:var(--dim)">LIGNES</small><input type="number" class="input" value="${w.rows || 2}" oninput="setWidgetProp('${w.id}', 'rows', parseInt(this.value))"></div>
                         <div><small style="color:var(--dim)">COLS</small><input type="number" class="input" value="${w.cols || 4}" oninput="setWidgetProp('${w.id}', 'cols', parseInt(this.value))"></div>
+                    </div>
+                `;
+            }
+
+            if (w.type === 'colorpad') {
+                const swatches = ['#ff4d4d','#ff8800','#ffcc00','#00ff88','#00d2ff','#cc00ff','#ffffff','#ff69b4','#7fff00','#00bfff','#4444ff','#aaaaaa'];
+                if (selCell !== null) {
+                    const curColor = (w.padColors && w.padColors[selCell]) || '#444444';
+                    const curVal   = (w.padValues && w.padValues[selCell] !== undefined) ? w.padValues[selCell] : selCell;
+                    html += `
+                        <div class="sidebar-title" style="opacity:0.6;">Couleur du Pad</div>
+                        <div style="display:flex; gap:8px; margin-bottom:10px; align-items:center;">
+                            <input type="color" value="${curColor}"
+                                   oninput="setPadColor('${w.id}', ${selCell}, this.value); renderConfigUI();"
+                                   style="width:48px; height:40px; border:none; border-radius:8px; cursor:pointer; padding:2px; background:none; flex-shrink:0;">
+                            <input type="text" class="input" value="${curColor}"
+                                   style="margin-bottom:0; font-family:monospace; font-size:0.75rem;"
+                                   placeholder="#rrggbb"
+                                   oninput="if(/^#[0-9a-fA-F]{6}$/.test(this.value)){setPadColor('${w.id}', ${selCell}, this.value); renderConfigUI();}"
+                                   onfocus="this.select()">
+                        </div>
+                        <div style="display:grid; grid-template-columns:repeat(6,1fr); gap:5px; margin-bottom:18px;">
+                            ${swatches.map(c => `<div onclick="setPadColor('${w.id}',${selCell},'${c}'); renderConfigUI();"
+                                 style="height:26px; background:${c}; border-radius:6px; cursor:pointer; border:2px solid ${curColor===c?'#fff':'transparent'};"></div>`).join('')}
+                        </div>
+
+                        <div class="sidebar-title" style="opacity:0.6;">Valeur OSC envoyée</div>
+                        <input type="number" class="input" value="${curVal}" step="any" placeholder="0"
+                               oninput="setPadValue('${w.id}', ${selCell}, parseFloat(this.value))">
+                        <div style="font-size:0.55rem; color:var(--dim); margin-top:-4px; margin-bottom:15px;">Valeur envoyée à l'adresse OSC quand ce pad est pressé</div>
+                    `;
+                }
+                html += `
+                    <div class="sidebar-title" style="opacity:0.6;">Format Grille Couleurs</div>
+                    <div style="display:grid; grid-template-columns:1fr 1fr; gap:8px; margin-bottom:20px;">
+                        <div><small style="color:var(--dim)">LIGNES</small><input type="number" class="input" min="1" value="${w.rows || 2}" oninput="setWidgetProp('${w.id}', 'rows', parseInt(this.value))"></div>
+                        <div><small style="color:var(--dim)">COLS</small><input type="number" class="input" min="1" value="${w.cols || 3}" oninput="setWidgetProp('${w.id}', 'cols', parseInt(this.value))"></div>
                     </div>
                 `;
             }
@@ -947,10 +1068,29 @@
             if(w.type === 'grid' && cellIndex !== null) {
                 if(!w.gridLabels) w.gridLabels = {};
                 w.gridLabels[cellIndex] = val;
+            } else if(w.type === 'colorpad' && cellIndex !== null) {
+                if(!w.padLabels) w.padLabels = {};
+                w.padLabels[cellIndex] = val;
             } else {
                 w.name = val;
             }
             save(); render();
+        }
+
+        function setPadColor(id, cellIndex, color) {
+            const w = getActiveTab().widgets.find(x => x.id === id);
+            if(!w) return;
+            if(!w.padColors) w.padColors = {};
+            w.padColors[cellIndex] = color;
+            save(); render();
+        }
+
+        function setPadValue(id, cellIndex, val) {
+            const w = getActiveTab().widgets.find(x => x.id === id);
+            if(!w) return;
+            if(!w.padValues) w.padValues = {};
+            w.padValues[cellIndex] = isNaN(val) ? cellIndex : val;
+            save();
         }
 
         function updateMapping(v) { 
