@@ -1,275 +1,184 @@
 {
   "tabs": [
     {
-      "id": "tab-1776281009748",
-      "name": "Live Show",
+      "id": "tab-1777447648069",
+      "name": "Layer1",
       "widgets": [
         {
-          "id": "1776281013643",
-          "type": "pad",
-          "x": 714.4683837890625,
-          "y": 94.00576782226562,
-          "w": 371.83837890625,
-          "h": 95.05845642089844,
-          "address": "/composition/disconnectall",
-          "value": 0,
-          "color": "#ff4d4d",
-          "name": "RESET ALL"
-        },
-        {
-          "id": "1776281732834",
-          "type": "pad",
-          "x": 440,
-          "y": 70,
-          "w": 120,
-          "h": 120,
-          "address": "/composition/video/effects/shiftrgb2/bypassed",
-          "value": 1,
-          "name": "RGB Display",
-          "isToggle": true
-        },
-        {
-          "id": "1776282974102",
-          "type": "grid",
-          "x": 701,
-          "y": 209,
-          "w": 400,
-          "h": 300,
-          "address": "/grid-4102",
-          "value": 0,
-          "rows": 2,
-          "cols": 4,
-          "gridStates": {
-            "0": 0,
-            "1": 0,
-            "2": 0,
-            "3": 0,
-            "4": 0,
-            "5": 0,
-            "6": 0,
-            "7": 0
-          },
-          "gridMapping": {
-            "0": "/composition/layers/2/clips/1/connect",
-            "1": "/composition/layers/2/clips/2/connect",
-            "2": "/composition/layers/2/clips/3/connect",
-            "4": "/composition/layers/1/clips/1/connect",
-            "5": "/composition/layers/1/clips/2/connect",
-            "6": "/composition/layers/1/clips/3/connect",
-            "7": "/composition/layers/1/clips/4/connect"
-          },
-          "color": "#00ff88",
-          "gridLabels": {
-            "0": "L2/1",
-            "1": "L2/2",
-            "2": "L2/3",
-            "3": "L2/4",
-            "4": "L1/1",
-            "5": "L1/2",
-            "6": "L1/3",
-            "7": "L1/4"
-          }
-        },
-        {
-          "id": "1776283141495",
-          "type": "slider",
-          "x": 1115.98388671875,
-          "y": 112.99874877929688,
-          "w": 98.0118408203125,
-          "h": 399.8778076171875,
-          "address": "/composition/layers/2/transition/duration",
-          "value": 0.4360784453207726,
-          "dir": "v",
-          "name": "transition l2"
-        },
-        {
-          "id": "1776283200496",
-          "type": "slider",
-          "x": 1235,
-          "y": 113,
-          "w": 87.0999755859375,
-          "h": 398.3000183105469,
-          "address": "/composition/layers/1/transition/duration",
-          "value": 0.028886079788208008,
-          "dir": "v",
-          "name": "transition l1"
-        },
-        {
-          "id": "1776283363823",
-          "type": "grid",
-          "x": 618.90625,
-          "y": 214.92190551757812,
-          "w": 70.4000244140625,
-          "h": 292.199951171875,
-          "address": "/grid-3823",
-          "value": 0,
-          "rows": 2,
-          "cols": 1,
-          "gridStates": {
-            "0": 0,
-            "1": 0
-          },
-          "gridMapping": {
-            "0": "/composition/layers/2/clear",
-            "1": "/composition/layers/1/clear"
-          },
-          "color": "#ff4d4d",
-          "gridLabels": {
-            "0": "RESET",
-            "1": "RESET"
-          }
-        },
-        {
-          "id": "1776283713428",
-          "type": "pad",
-          "x": 570,
-          "y": 70.00933837890625,
-          "w": 120,
-          "h": 120,
-          "address": "/composition/video/effects/invertrgb/bypassed",
-          "value": 1,
-          "isToggle": true,
-          "color": "#00ff88"
-        }
-      ]
-    },
-    {
-      "id": "tab-1776284558994",
-      "name": "Tritri",
-      "widgets": [
-        {
-          "id": "1776284613995",
-          "type": "slider",
-          "x": 3,
-          "y": 407.0057144165039,
-          "w": 375,
-          "h": 120,
-          "address": "/composition/layers/1/video/effects/colorize/effect/color/hue",
-          "value": 0.37212553491389483,
-          "dir": "h",
-          "name": "HUE color"
-        },
-        {
-          "id": "1776285464464",
-          "type": "pad",
+          "id": "1777447679896",
+          "type": "colorpad",
           "x": 0,
-          "y": 0,
-          "w": 120,
-          "h": 120,
-          "address": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors/",
-          "value": 0,
-          "color": "#ff4d4d",
-          "isToggle": true,
-          "name": ""
-        },
-        {
-          "id": "1776285467084",
-          "type": "pad",
-          "x": 130.00006103515625,
-          "y": 0,
-          "w": 120,
-          "h": 120,
-          "address": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors",
-          "value": 0,
-          "isToggle": false,
-          "color": "#00ff88"
-        },
-        {
-          "id": "1776285478073",
-          "type": "pad",
-          "x": 0,
-          "y": 133.00994873046875,
-          "w": 120,
-          "h": 120,
-          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
-          "value": 0,
-          "color": "#ffcc00"
-        },
-        {
-          "id": "1776285478442",
-          "type": "pad",
-          "x": 260.00311279296875,
-          "y": 0,
-          "w": 120,
-          "h": 120,
-          "address": "/composition/video/effects/colorize/effect/color/palette/colors",
-          "value": 0,
-          "color": "#00d2ff"
-        },
-        {
-          "id": "1777229763429",
-          "type": "pad",
-          "x": 129.00858306884766,
-          "y": 132.73868560791016,
-          "w": 120,
-          "h": 120,
-          "address": "/pad-3429",
-          "value": 0,
-          "color": "#cc00ff"
-        },
-        {
-          "id": "1777229764974",
-          "type": "pad",
-          "x": 0,
-          "y": 267.00003814697266,
-          "w": 120,
-          "h": 120,
-          "address": "/pad-4974",
-          "value": 0
-        },
-        {
-          "id": "1777229765796",
-          "type": "pad",
-          "x": 259.1012954711914,
-          "y": 134.72733306884766,
-          "w": 120,
-          "h": 120,
-          "address": "/pad-5796",
-          "value": 0
-        },
-        {
-          "id": "1777229896153",
-          "type": "pad",
-          "x": 259.2000198364258,
-          "y": 270.7454833984375,
-          "w": 120,
-          "h": 120,
-          "address": "/pad-6153",
-          "value": 0
-        },
-        {
-          "id": "1777229897213",
-          "type": "pad",
-          "x": 128.00684356689453,
-          "y": 269.0074005126953,
-          "w": 120,
-          "h": 120,
-          "address": "/pad-7213",
-          "value": 0
-        },
-        {
-          "id": "1777232834568",
-          "type": "grid",
-          "x": 410.5906677246094,
           "y": 0,
           "w": 400,
           "h": 400,
-          "address": "/grid-4568",
+          "address": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors",
+          "value": 2,
+          "rows": 3,
+          "cols": 3,
+          "padColors": {
+            "0": "#ff0000",
+            "1": "#00ff00",
+            "2": "#00d2ff",
+            "3": "#ffff00",
+            "4": "#444444",
+            "5": "#0000ff",
+            "6": "#cc00ff",
+            "7": "#ffffff"
+          },
+          "padValues": {
+            "0": 0,
+            "1": 1,
+            "2": 2,
+            "3": 3,
+            "4": 4,
+            "5": 5
+          },
+          "padLabels": {
+            "0": "",
+            "1": "",
+            "2": "",
+            "3": "",
+            "4": "",
+            "5": "",
+            "7": ""
+          },
+          "activeIndex": 2,
+          "name": "ColorQuickSelector1",
+          "color": "#7fff00"
+        },
+        {
+          "id": "1777449033309",
+          "type": "slider",
+          "x": 0,
+          "y": 405.4574966430664,
+          "w": 400,
+          "h": 100,
+          "address": "/composition/layers/1/video/effects/colorize/effect/color/hue",
+          "value": 0.6619988679885864,
+          "dir": "h",
+          "name": "Color HUE"
+        }
+      ],
+      "oscAddress": "/composition/layers/1/selected",
+      "oscValue": 1
+    },
+    {
+      "id": "tab-1777452343663",
+      "name": "Layer2",
+      "widgets": [
+        {
+          "id": "1777452871919",
+          "type": "colorpad",
+          "x": 0,
+          "y": 0,
+          "w": 400,
+          "h": 400,
+          "address": "/composition/layers/2/video/effects/colorize/effect/color/palette/colors",
+          "value": 7,
+          "rows": 3,
+          "cols": 3,
+          "padColors": {
+            "0": "#ff4d4d",
+            "1": "#ff8800",
+            "2": "#ffcc00",
+            "3": "#00ff88",
+            "4": "#00d2ff",
+            "5": "#cc00ff"
+          },
+          "padValues": {
+            "0": 0,
+            "1": 1,
+            "2": 2,
+            "3": 3,
+            "4": 4,
+            "5": 5
+          },
+          "padLabels": {
+            "0": "",
+            "1": "",
+            "2": "",
+            "3": "",
+            "4": "",
+            "5": ""
+          },
+          "activeIndex": 8,
+          "name": "ColorQuickSelector2"
+        },
+        {
+          "id": "1777452887328",
+          "type": "slider",
+          "x": 0,
+          "y": 409.5540084838867,
+          "w": 400,
+          "h": 100,
+          "address": "/composition/layers/2/video/effects/colorize/effect/color/hue",
+          "value": 0.5,
+          "dir": "h",
+          "name": "Color HUE"
+        }
+      ],
+      "oscAddress": "/composition/layers/2/selected",
+      "oscValue": 1
+    },
+    {
+      "id": "tab-1777452814163",
+      "name": "Layer3",
+      "widgets": [
+        {
+          "id": "1777453110940",
+          "type": "colorpad",
+          "x": 0,
+          "y": 0,
+          "w": 400,
+          "h": 400,
+          "address": "/composition/layers/3/video/effects/colorize/effect/color/palette/colors",
           "value": 0,
           "rows": 3,
           "cols": 3,
-          "gridStates": {
+          "padColors": {
+            "0": "#ff4d4d",
+            "1": "#ff8800",
+            "2": "#ffcc00",
+            "3": "#00ff88",
+            "4": "#00d2ff",
+            "5": "#cc00ff"
+          },
+          "padValues": {
             "0": 0,
-            "1": 0
+            "1": 1,
+            "2": 2,
+            "3": 3,
+            "4": 4,
+            "5": 5
           },
-          "gridMapping": {
-            "0": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors",
-            "1": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors"
+          "padLabels": {
+            "0": "",
+            "1": "",
+            "2": "",
+            "3": "",
+            "4": "",
+            "5": ""
           },
-          "color": "#ff4d4d"
+          "activeIndex": 0,
+          "name": "ColorQuickSelector3"
+        },
+        {
+          "id": "1777453124593",
+          "type": "slider",
+          "x": 0,
+          "y": 405.00001525878906,
+          "w": 400,
+          "h": 100,
+          "address": "/composition/layers/3/video/effects/colorize/effect/color/hue",
+          "value": 0,
+          "dir": "h",
+          "name": "Color HUE"
         }
-      ]
+      ],
+      "oscAddress": "/composition/layers/3/selected",
+      "oscValue": 1
     }
   ],
-  "activeTab": "tab-1776284558994"
+  "activeTab": "tab-1777452343663",
+  "tabSwitchAddress": "/composition/layers/"
 }
