@@ -297,9 +297,15 @@
                 <button class="btn" style="border-style:dashed; margin-top:10px;" onclick="promptCreateTab()">+ Ajouter Onglet</button>
                 <div style="margin-top:15px; padding-top:15px; border-top:1px solid var(--border);">
                     <div class="sidebar-title" style="opacity:0.6;">Changement d'onglet via OSC</div>
-                    <input type="text" class="input" id="tab-osc-addr" placeholder="/adresse/osc"
-                           oninput="state.tabSwitchAddress = this.value.trim(); save()">
-                    <div style="font-size:0.55rem; color:var(--dim); margin-top:-4px;">Valeur OSC reçue : 0 → onglet 1, 1 → onglet 2…</div>
+                    <div style="display:grid; grid-template-columns:auto 1fr 52px; gap:3px; margin-bottom:6px;">
+                        <div style="font-size:0.5rem; color:var(--dim); font-weight:800; letter-spacing:1px; padding:0 4px;">ONGLET</div>
+                        <div style="font-size:0.5rem; color:var(--dim); font-weight:800; letter-spacing:1px;">ADRESSE OSC</div>
+                        <div style="font-size:0.5rem; color:var(--dim); font-weight:800; letter-spacing:1px;">VAL</div>
+                    </div>
+                    <div id="tab-osc-list"></div>
+                    <div style="font-size:0.5rem; color:var(--dim); margin-top:6px; line-height:1.6;">
+                        Ex : <span style="color:var(--accent); font-family:monospace;">/composition/layers/1/select</span> val <span style="color:var(--accent); font-family:monospace;">1</span>
+                    </div>
                 </div>
             </div>
             <div class="sidebar-footer">
@@ -353,10 +359,14 @@
                         }
                     });
                 }
-                if (!parsed.tabSwitchAddress) parsed.tabSwitchAddress = '';
+                // Migration : ancienne adresse globale → par onglet
+                parsed.tabs.forEach((t, i) => {
+                    if (!t.oscAddress) t.oscAddress = '';
+                    if (t.oscValue === undefined) t.oscValue = 1;
+                });
                 return parsed;
             } catch(e) {
-                return {tabs:[{id:'tab-main',name:'Main',widgets:[]}], activeTab:'tab-main', tabSwitchAddress:''};
+                return {tabs:[{id:'tab-main',name:'Main',widgets:[],oscAddress:'',oscValue:1}], activeTab:'tab-main'};
             }
         })();
         let isEdit = false;
@@ -538,8 +548,22 @@
             });
             const tabNameEl = document.getElementById('active-tab-name');
             if(tabNameEl) tabNameEl.textContent = active.name.toUpperCase();
-            const tabOscInput = document.getElementById('tab-osc-addr');
-            if(tabOscInput) tabOscInput.value = state.tabSwitchAddress || '';
+            const tabOscList = document.getElementById('tab-osc-list');
+            if (tabOscList) {
+                tabOscList.innerHTML = state.tabs.map(t => `
+                    <div style="display:grid; grid-template-columns:auto 1fr 52px; gap:3px; margin-bottom:5px; align-items:center;">
+                        <div style="font-size:0.6rem; font-weight:800; color:#fff; padding:0 6px 0 4px; white-space:nowrap; max-width:64px; overflow:hidden; text-overflow:ellipsis;" title="${t.name}">${t.name}</div>
+                        <input type="text" class="input" value="${t.oscAddress||''}" placeholder="/adresse/osc"
+                               style="margin-bottom:0; font-family:monospace; font-size:0.58rem; padding:7px 8px;"
+                               oninput="setTabOsc('${t.id}', this.value.trim(), null)"
+                               onfocus="this.select()">
+                        <input type="number" class="input" value="${t.oscValue !== undefined ? t.oscValue : 1}" step="any" placeholder="1"
+                               style="margin-bottom:0; font-size:0.6rem; padding:7px 6px;"
+                               oninput="setTabOsc('${t.id}', null, isNaN(parseFloat(this.value)) ? null : parseFloat(this.value))"
+                               onfocus="this.select()">
+                    </div>
+                `).join('');
+            }
             
             const canvas = document.getElementById('canvas');
             if (!canvas) { console.error('[PROXIMA] render: #canvas introuvable'); return; }
@@ -808,13 +832,11 @@
                     }
                 }
             }));
-            if(state.tabSwitchAddress && addr === state.tabSwitchAddress) {
-                const tabIdx = Math.round(val);
-                if(tabIdx >= 0 && tabIdx < state.tabs.length) {
-                    state.activeTab = state.tabs[tabIdx].id;
-                    render();
-                }
-            }
+            const matchedTab = state.tabs.find(t =>
+                t.oscAddress && addr === t.oscAddress &&
+                Math.abs(val - (t.oscValue !== undefined ? t.oscValue : 1)) < 0.001
+            );
+            if (matchedTab) { state.activeTab = matchedTab.id; render(); }
         }
 
         function updateVisualSpecific(w) { 
@@ -1173,7 +1195,8 @@
         }
         function closeModal() { document.getElementById('modal').classList.remove('active'); }
 
-        function promptCreateTab() { openModal('Nouvel Onglet', 'Saisir le nom', (v) => { state.tabs.push({id: 'tab-'+Date.now(), name: v || 'Onglet', widgets: []}); save(); render(); }, true); }
+        function promptCreateTab() { openModal('Nouvel Onglet', 'Saisir le nom', (v) => { state.tabs.push({id: 'tab-'+Date.now(), name: v || 'Onglet', widgets: [], oscAddress: '', oscValue: 1}); save(); render(); }, true); }
+        function setTabOsc(id, addr, val) { const t = state.tabs.find(x => x.id === id); if (!t) return; if (addr !== null) t.oscAddress = addr; if (val !== null) t.oscValue = val; save(); }
         function promptRenameTab(id, e) { e.stopPropagation(); const t = state.tabs.find(x=>x.id===id); openModal('Renommer', 'Nouveau nom pour '+t.name, (v) => { t.name = v; save(); render(); }, true, t.name); }
         function confirmDeleteTab(id, e) { e.stopPropagation(); openModal('Supprimer', 'Voulez-vous supprimer cet onglet ?', () => { state.tabs = state.tabs.filter(x=>x.id!==id); save(); render(); }); }
         function confirmDeleteWidget() { openModal('Supprimer Bloc', 'Effacer définitivement ?', () => { deleteWidget(); }); }
