@@ -9,21 +9,22 @@
           "type": "colorpad",
           "x": 0,
           "y": 0,
-          "w": 400,
-          "h": 400,
+          "w": 350,
+          "h": 350,
           "address": "/composition/layers/1/video/effects/colorize/effect/color/palette/colors",
-          "value": 2,
+          "value": 6,
           "rows": 3,
           "cols": 3,
           "padColors": {
             "0": "#ff0000",
             "1": "#00ff00",
-            "2": "#00d2ff",
+            "2": "#0000ff",
             "3": "#ffff00",
-            "4": "#444444",
-            "5": "#0000ff",
-            "6": "#cc00ff",
-            "7": "#ffffff"
+            "4": "#00ffff",
+            "5": "#ff00ff",
+            "6": "#ff8800",
+            "7": "#8800ff",
+            "8": "#ffffff"
           },
           "padValues": {
             "0": 0,
@@ -42,7 +43,7 @@
             "5": "",
             "7": ""
           },
-          "activeIndex": 2,
+          "activeIndex": 6,
           "name": "ColorQuickSelector1",
           "color": "#7fff00"
         },
@@ -50,11 +51,11 @@
           "id": "1777449033309",
           "type": "slider",
           "x": 0,
-          "y": 405.4574966430664,
-          "w": 400,
+          "y": 347.40220642089844,
+          "w": 350,
           "h": 100,
           "address": "/composition/layers/1/video/effects/colorize/effect/color/hue",
-          "value": 0.6619988679885864,
+          "value": 0.03714985315809587,
           "dir": "h",
           "name": "Color HUE"
         }
@@ -71,19 +72,22 @@
           "type": "colorpad",
           "x": 0,
           "y": 0,
-          "w": 400,
-          "h": 400,
+          "w": 350,
+          "h": 350,
           "address": "/composition/layers/2/video/effects/colorize/effect/color/palette/colors",
-          "value": 7,
+          "value": 2,
           "rows": 3,
           "cols": 3,
           "padColors": {
-            "0": "#ff4d4d",
-            "1": "#ff8800",
-            "2": "#ffcc00",
-            "3": "#00ff88",
-            "4": "#00d2ff",
-            "5": "#cc00ff"
+            "0": "#ff0000",
+            "1": "#00ff00",
+            "2": "#0000ff",
+            "3": "#ffff00",
+            "4": "#00ffff",
+            "5": "#ff00ff",
+            "6": "#ff8800",
+            "7": "#8800ff",
+            "8": "#ffffff"
           },
           "padValues": {
             "0": 0,
@@ -101,18 +105,18 @@
             "4": "",
             "5": ""
           },
-          "activeIndex": 8,
+          "activeIndex": 2,
           "name": "ColorQuickSelector2"
         },
         {
           "id": "1777452887328",
           "type": "slider",
           "x": 0,
-          "y": 409.5540084838867,
-          "w": 400,
+          "y": 350.6290512084961,
+          "w": 350,
           "h": 100,
           "address": "/composition/layers/2/video/effects/colorize/effect/color/hue",
-          "value": 0.5,
+          "value": 0.6666666865348816,
           "dir": "h",
           "name": "Color HUE"
         }
@@ -129,19 +133,22 @@
           "type": "colorpad",
           "x": 0,
           "y": 0,
-          "w": 400,
-          "h": 400,
+          "w": 350,
+          "h": 350,
           "address": "/composition/layers/3/video/effects/colorize/effect/color/palette/colors",
           "value": 0,
           "rows": 3,
           "cols": 3,
           "padColors": {
-            "0": "#ff4d4d",
-            "1": "#ff8800",
-            "2": "#ffcc00",
-            "3": "#00ff88",
-            "4": "#00d2ff",
-            "5": "#cc00ff"
+            "0": "#ff0000",
+            "1": "#00ff00",
+            "2": "#0000ff",
+            "3": "#ffff00",
+            "4": "#00ffff",
+            "5": "#ff00ff",
+            "6": "#ff8800",
+            "7": "#8800ff",
+            "8": "#ffffff"
           },
           "padValues": {
             "0": 0,
@@ -159,15 +166,15 @@
             "4": "",
             "5": ""
           },
-          "activeIndex": 0,
+          "activeIndex": 1,
           "name": "ColorQuickSelector3"
         },
         {
           "id": "1777453124593",
           "type": "slider",
-          "x": 0,
-          "y": 405.00001525878906,
-          "w": 400,
+          "x": 1.51593017578125,
+          "y": 355.81819915771484,
+          "w": 350,
           "h": 100,
           "address": "/composition/layers/3/video/effects/colorize/effect/color/hue",
           "value": 0,
@@ -179,6 +186,6 @@
       "oscValue": 1
     }
   ],
-  "activeTab": "tab-1777452343663",
+  "activeTab": "tab-1777452814163",
   "tabSwitchAddress": "/composition/layers/"
 }
